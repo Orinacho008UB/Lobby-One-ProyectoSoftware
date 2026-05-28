@@ -1,0 +1,13 @@
+{
+  "name": "lobby-one",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de reservas hoteleras - Lobby One",
+  "scripts": {
+    "start": "concurrently \"cd backend && mvn spring-boot:run\" \"cd frontend && ng serve --open\"",
+    "start:backend": "cd backend && mvn spring-boot:run",
+    "start:frontend": "cd frontend && ng serve --open"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

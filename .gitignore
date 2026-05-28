@@ -1,0 +1,6 @@
+# Dependencias de Node
+node_modules/
+package-lock.json
+
+# Carpeta de documentos de desarrollo
+desarrollo/
