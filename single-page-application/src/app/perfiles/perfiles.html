@@ -1,1 +1,112 @@
-<p>perfiles works!</p>
+<section class="perfiles">
+  @if (mensajeExito) {
+    <p class="exito">{{ mensajeExito }}</p>
+  }
+  @if (mensajeError) {
+    <p class="error-general">{{ mensajeError }}</p>
+  }
+
+  <!-- ================= REGISTRO ================= -->
+  @if (vista() === 'registro') {
+    <h1>Crear cuenta</h1>
+    <form [formGroup]="registroForm" (ngSubmit)="registrar()" novalidate>
+      <label>
+        Nombre
+        <input type="text" formControlName="nombre" autocomplete="name" />
+      </label>
+      @if (erroresBackend['nombre']) {
+        <small class="error">{{ erroresBackend['nombre'] }}</small>
+      } @else if (registroForm.controls.nombre.invalid && registroForm.controls.nombre.touched) {
+        <small class="error">El nombre es obligatorio.</small>
+      }
+
+      <label>
+        Email
+        <input type="email" formControlName="email" autocomplete="email" />
+      </label>
+      @if (erroresBackend['email']) {
+        <small class="error">{{ erroresBackend['email'] }}</small>
+      } @else if (registroForm.controls.email.invalid && registroForm.controls.email.touched) {
+        <small class="error">Ingresa un email valido.</small>
+      }
+
+      <label>
+        Telefono
+        <input type="tel" formControlName="telefono" autocomplete="tel" />
+      </label>
+      @if (erroresBackend['telefono']) {
+        <small class="error">{{ erroresBackend['telefono'] }}</small>
+      } @else if (registroForm.controls.telefono.invalid && registroForm.controls.telefono.touched) {
+        <small class="error">El telefono es obligatorio.</small>
+      }
+
+      <label>
+        Cedula
+        <input type="text" formControlName="cedula" />
+      </label>
+      @if (erroresBackend['cedula']) {
+        <small class="error">{{ erroresBackend['cedula'] }}</small>
+      } @else if (registroForm.controls.cedula.invalid && registroForm.controls.cedula.touched) {
+        <small class="error">La cedula es obligatoria.</small>
+      }
+
+      <label>
+        Contrasena
+        <input type="password" formControlName="contrasena" autocomplete="new-password" />
+      </label>
+      @if (erroresBackend['contrasena']) {
+        <small class="error">{{ erroresBackend['contrasena'] }}</small>
+      } @else if (registroForm.controls.contrasena.invalid && registroForm.controls.contrasena.touched) {
+        <small class="error">La contrasena debe tener al menos 8 caracteres.</small>
+      }
+
+      <button type="submit" [disabled]="enviando">
+        {{ enviando ? 'Creando...' : 'Crear cuenta' }}
+      </button>
+    </form>
+    <p class="alterna">¿Ya tienes cuenta? <a routerLink="/login">Inicia sesion</a></p>
+  }
+
+  <!-- ================= LOGIN ================= -->
+  @if (vista() === 'login') {
+    <h1>Iniciar sesion</h1>
+    <form [formGroup]="loginForm" (ngSubmit)="iniciarSesion()" novalidate>
+      <label>
+        Email
+        <input type="email" formControlName="email" autocomplete="email" />
+      </label>
+      @if (loginForm.controls.email.invalid && loginForm.controls.email.touched) {
+        <small class="error">Ingresa un email valido.</small>
+      }
+
+      <label>
+        Contrasena
+        <input type="password" formControlName="contrasena" autocomplete="current-password" />
+      </label>
+      @if (loginForm.controls.contrasena.invalid && loginForm.controls.contrasena.touched) {
+        <small class="error">La contrasena es obligatoria.</small>
+      }
+
+      <button type="submit" [disabled]="enviando">
+        {{ enviando ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+    <p class="alterna">¿No tienes cuenta? <a routerLink="/registro">Registrate</a></p>
+  }
+
+  <!-- ================= MI PERFIL ================= -->
+  @if (vista() === 'perfil') {
+    <h1>Mi perfil</h1>
+    @if (usuario(); as u) {
+      <ul class="datos">
+        <li><strong>Nombre:</strong> {{ u.nombre }}</li>
+        <li><strong>Rol:</strong> {{ u.rol }}</li>
+        <li><strong>Id:</strong> {{ u.id }}</li>
+      </ul>
+      <button type="button" (click)="cerrarSesion()">Cerrar sesion</button>
+    } @else {
+      <p>No hay una sesion activa.</p>
+      <p class="alterna"><a routerLink="/login">Iniciar sesion</a></p>
+    }
+  }
+</section>

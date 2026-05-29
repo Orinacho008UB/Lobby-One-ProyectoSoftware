@@ -1,0 +1,9 @@
+[ {
+  "id" : "1b19d1a3-2f41-44cc-a2b3-cd92f2185fa9",
+  "nombre" : "Diego",
+  "email" : "admin@hotel.com",
+  "telefono" : "04129269842",
+  "cedula" : "29631016",
+  "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$76sdnPRajDKGxkxO/P0WjA$Xd8mOjgEGfgEJCtg4RFgxU1Jlk49NQHnSVbrYNrXT6E",
+  "rol" : "ADMINISTRADOR"
+} ]

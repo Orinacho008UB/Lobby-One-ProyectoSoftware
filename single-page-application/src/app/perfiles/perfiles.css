@@ -1,0 +1,76 @@
+.perfiles {
+  max-width: 24rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+}
+
+.perfiles h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+input {
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid #bbb;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+button {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #93b4f0;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #c0392b;
+}
+
+.error-general {
+  color: #c0392b;
+  background: #fdecea;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.exito {
+  color: #1e7e34;
+  background: #e6f4ea;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.alterna {
+  margin-top: 1rem;
+}
+
+.datos {
+  list-style: none;
+  padding: 0;
+  line-height: 1.8;
+}

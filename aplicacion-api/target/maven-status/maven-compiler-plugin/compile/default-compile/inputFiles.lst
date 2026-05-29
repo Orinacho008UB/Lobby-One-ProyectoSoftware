@@ -1,6 +1,8 @@
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\AplicacionApiApplication.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\common\package-info.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\common\ValidacionException.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\config\ConfiguracionWeb.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\config\package-info.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\dataaccesscomponent\DataAccessComponent.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\dataaccesscomponent\DataAccessException.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\dataaccesscomponent\package-info.java
