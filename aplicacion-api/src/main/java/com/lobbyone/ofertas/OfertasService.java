@@ -151,6 +151,14 @@ public class OfertasService {
         }
     }
 
+    /**
+     * Busca una oferta por su id. Lo usa el modulo de reservas para validar
+     * vigencia y leer el precio del paquete al aplicar la oferta.
+     */
+    public java.util.Optional<Oferta> buscarPorId(String id) {
+        return repository.buscarPorId(id);
+    }
+
     private boolean esVacio(String valor) {
         return valor == null || valor.isBlank();
     }

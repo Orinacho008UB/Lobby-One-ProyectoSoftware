@@ -96,6 +96,14 @@ public class PerfilesService {
         return encontrado.get();
     }
 
+    /**
+     * Busca un perfil por su id. Lo usan otros modulos (p.ej. reservas) para
+     * confirmar que el cliente esta registrado.
+     */
+    public Optional<Perfil> buscarPorId(String id) {
+        return repository.buscarPorId(id);
+    }
+
     private boolean esVacio(String valor) {
         return valor == null || valor.isBlank();
     }

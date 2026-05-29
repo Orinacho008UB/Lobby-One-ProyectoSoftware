@@ -26,8 +26,14 @@ D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\perfiles\Perfil.
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\perfiles\PerfilesController.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\perfiles\PerfilesRepository.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\perfiles\PerfilesService.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\CotizarRequest.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\CrearReservaRequest.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\DesgloseReserva.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\package-info.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\Reserva.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\ReservasController.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\ReservasRepository.java
+D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\reservas\ReservasService.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\securitycomponent\package-info.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\securitycomponent\SecurityComponent.java
 D:\Descargas\LobbyOne\aplicacion-api\src\main\java\com\lobbyone\servicios\package-info.java

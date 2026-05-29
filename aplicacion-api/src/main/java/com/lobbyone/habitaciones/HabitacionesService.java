@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -101,6 +102,14 @@ public class HabitacionesService {
                 .filter(h -> filtro.tipo() == null || h.getTipo() == filtro.tipo())
                 .filter(h -> filtro.capacidad() == null || h.getCapacidad() >= filtro.capacidad())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca una habitacion por su id. Lo usan otros modulos (p.ej. reservas)
+     * para validar la habitacion seleccionada y leer su precio/estado/tipo.
+     */
+    public Optional<Habitacion> buscarPorId(String id) {
+        return repository.buscarPorId(id);
     }
 
     private boolean esVacio(String valor) {

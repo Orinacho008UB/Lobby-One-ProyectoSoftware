@@ -2,6 +2,7 @@ package com.lobbyone.reservas;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -35,7 +36,7 @@ public class Reserva {
     private BigDecimal montoTotal;
     /** Email al que se envian las notificaciones de la reserva. */
     private String emailContacto;
-    private LocalDate fechaCreacion;
+    private LocalDateTime fechaCreacion;
 
     /** Constructor sin argumentos requerido por Jackson. */
     public Reserva() {
@@ -43,7 +44,7 @@ public class Reserva {
 
     public Reserva(String id, String perfilId, String habitacionId, List<String> serviciosContratados,
                    String ofertaAplicada, LocalDate fechaEntrada, LocalDate fechaSalida,
-                   EstadoReserva estado, BigDecimal montoTotal, String emailContacto, LocalDate fechaCreacion) {
+                   EstadoReserva estado, BigDecimal montoTotal, String emailContacto, LocalDateTime fechaCreacion) {
         this.id = id;
         this.perfilId = perfilId;
         this.habitacionId = habitacionId;
@@ -137,11 +138,11 @@ public class Reserva {
         this.emailContacto = emailContacto;
     }
 
-    public LocalDate getFechaCreacion() {
+    public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
 
-    public void setFechaCreacion(LocalDate fechaCreacion) {
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
     }
 }
