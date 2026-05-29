@@ -1,0 +1,15 @@
+# Ignorar dependencias de Angular
+single-page-application/node_modules/
+single-page-application/.angular/
+single-page-application/dist/
+
+# Ignorar archivos de compilación de Spring Boot
+aplicacion-api/target/
+aplicacion-api/.mvn/
+aplicacion-api/mvnw
+aplicacion-api/mvnw.cmd
+
+# Ignorar archivos de configuración del editor
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Hereda la gestión de dependencias y plugins de Spring Boot. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.lobbyone</groupId>
+    <artifactId>aplicacion-api</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>aplicacion-api</name>
+    <description>Lobby One - Aplicacion API (backend de gestion hotelera)</description>
+
+    <properties>
+        <!-- El proyecto se compila a bytecode Java 17 (ver CLAUDE.md). -->
+        <java.version>17</java.version>
+        <!-- Bouncy Castle: requerido por Argon2 de Spring Security Crypto. -->
+        <bouncycastle.version>1.79</bouncycastle.version>
+    </properties>
+
+    <dependencies>
+        <!-- API REST (Controllers). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Hashing de contrasenas con Argon2 (SecurityComponent). -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
+        <!-- Bouncy Castle: proveedor criptografico necesario para Argon2. -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle.version}</version>
+        </dependency>
+
+        <!-- Envio de correos via SMTP (NotificationComponent). -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- Testing con JUnit 5. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <!--
+                  JDK 25: habilita el soporte experimental de Byte Buddy para que
+                  Mockito pueda generar mocks de clases compiladas con bytecode nuevo.
+                -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
