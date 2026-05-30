@@ -89,7 +89,7 @@ debe propagar ese objeto para que cada formulario muestre los errores junto al c
 
 ## Session Manager
 
-- Guarda la **identidad del usuario autenticado**: `{ id, nombre, rol }`. **NUNCA** la
+- Guarda la **identidad del usuario autenticado**: `{ id, nombre, rol, email }`. **NUNCA** la
   contraseña ni el hash.
 - Persiste en **localStorage** (sobrevive a un refresco de página). Al iniciar la app,
   rehidrata el estado desde localStorage si existe.

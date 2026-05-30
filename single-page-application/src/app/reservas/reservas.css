@@ -1,0 +1,362 @@
+.reservas {
+  max-width: 38rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  font-family: system-ui, sans-serif;
+}
+
+/* Indicador de pasos */
+.pasos-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.paso-item {
+  color: #aaa;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.paso-item.activo {
+  color: #2563eb;
+  font-weight: 700;
+  background: #eff6ff;
+}
+
+.paso-item.completo {
+  color: #1e7e34;
+}
+
+.paso-sep {
+  color: #ccc;
+}
+
+/* Formularios */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.label-opcional {
+  font-weight: normal;
+  color: #555;
+}
+
+input,
+select {
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid #bbb;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+/* Cards de ofertas y habitaciones */
+.lista-cards {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card.seleccionada {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.card-titulo {
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.card-meta {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+}
+
+.card-desc {
+  font-size: 0.875rem;
+  color: #444;
+  margin: 0.25rem 0;
+}
+
+.card-precio {
+  font-weight: 700;
+  color: #2563eb;
+  margin: 0;
+}
+
+/* Oferta aplicada (banner) */
+.oferta-activa {
+  background: #e6f4ea;
+  border: 1px solid #a3d9a5;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+}
+
+/* Servicios paso 4 */
+.servicios-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.servicio-item {
+  border: 1px solid #eee;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.servicio-bundle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.servicio-extra {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: normal;
+}
+
+.servicio-extra input[type='checkbox'] {
+  margin-top: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.servicio-extra span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Resumen paso 5 */
+.resumen-box {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.resumen-box p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+/* Tabla de desglose */
+.desglose {
+  margin: 1rem 0;
+}
+
+.tabla-desglose {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tabla-desglose td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.tabla-desglose tfoot td {
+  border-top: 2px solid #333;
+  border-bottom: none;
+  padding-top: 0.5rem;
+}
+
+.monto {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.meta-celda {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.fila-total td {
+  font-size: 1rem;
+}
+
+.total {
+  font-size: 1.1rem;
+}
+
+/* Pantalla confirmado */
+.confirmado {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.icono-ok {
+  font-size: 3rem;
+  color: #1e7e34;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.exito-msg {
+  color: #1e7e34;
+  margin-bottom: 1.5rem;
+}
+
+.detalle-reserva {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto 1.5rem;
+  max-width: 28rem;
+  text-align: left;
+  line-height: 2;
+}
+
+.detalle-reserva code {
+  font-size: 0.8rem;
+  background: #f4f4f4;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+}
+
+/* Botones de accion */
+.acciones {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: #2563eb;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #93b4f0;
+  cursor: not-allowed;
+}
+
+.btn-secundario {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secundario:hover {
+  background: #e5e7eb;
+}
+
+.btn-confirmar {
+  background: #1e7e34;
+}
+
+.btn-confirmar:disabled {
+  background: #86c99a;
+}
+
+.btn-link {
+  background: none;
+  color: #2563eb;
+  border: none;
+  padding: 0;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Badges */
+.badge-ok {
+  color: #1e7e34;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.badge-bundle {
+  background: #e6f4ea;
+  color: #1e7e34;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Mensajes */
+.error {
+  color: #c0392b;
+  font-size: 0.875rem;
+}
+
+.error-general {
+  color: #c0392b;
+  background: #fdecea;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.ayuda {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.aviso {
+  color: #888;
+  font-style: italic;
+}
+
+.cargando {
+  color: #555;
+  font-style: italic;
+}

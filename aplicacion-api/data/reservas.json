@@ -1,0 +1,49 @@
+[ {
+  "id" : "535ac6b4-0087-42af-8302-ec56809d8899",
+  "perfilId" : "1b19d1a3-2f41-44cc-a2b3-cd92f2185fa9",
+  "habitacionId" : "2241e8e8-7814-4224-8f00-641ce7814ca4",
+  "serviciosContratados" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "ofertaAplicada" : null,
+  "fechaEntrada" : "2026-06-01",
+  "fechaSalida" : "2026-06-04",
+  "estado" : "ACTIVA",
+  "montoTotal" : 445.00,
+  "emailContacto" : "admin@hotel.com",
+  "fechaCreacion" : "2026-05-29T19:07:34.4985195"
+}, {
+  "id" : "17a2cabd-bd23-4161-ab44-831cceba6acf",
+  "perfilId" : "1b19d1a3-2f41-44cc-a2b3-cd92f2185fa9",
+  "habitacionId" : "2241e8e8-7814-4224-8f00-641ce7814ca4",
+  "serviciosContratados" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "ofertaAplicada" : null,
+  "fechaEntrada" : "2026-06-05",
+  "fechaSalida" : "2026-06-08",
+  "estado" : "ACTIVA",
+  "montoTotal" : 445.00,
+  "emailContacto" : "admin@hotel.com",
+  "fechaCreacion" : "2026-05-29T19:08:40.548669"
+}, {
+  "id" : "831ae2c2-2375-472f-a58b-ce7659887552",
+  "perfilId" : "1b19d1a3-2f41-44cc-a2b3-cd92f2185fa9",
+  "habitacionId" : "2241e8e8-7814-4224-8f00-641ce7814ca4",
+  "serviciosContratados" : [ ],
+  "ofertaAplicada" : null,
+  "fechaEntrada" : "2026-07-01",
+  "fechaSalida" : "2026-07-03",
+  "estado" : "ACTIVA",
+  "montoTotal" : 280,
+  "emailContacto" : "admin@hotel.com",
+  "fechaCreacion" : "2026-05-29T19:10:03.237881"
+}, {
+  "id" : "a1eb2593-9a0d-4308-9879-51bea43a10df",
+  "perfilId" : "6121ee48-9a95-406b-a786-cd09d7eb5a4b",
+  "habitacionId" : "2241e8e8-7814-4224-8f00-641ce7814ca4",
+  "serviciosContratados" : [ ],
+  "ofertaAplicada" : null,
+  "fechaEntrada" : "2026-08-01",
+  "fechaSalida" : "2026-08-03",
+  "estado" : "ACTIVA",
+  "montoTotal" : 280,
+  "emailContacto" : "prueba.e2e.5732@test.com",
+  "fechaCreacion" : "2026-05-29T19:36:07.9418061"
+} ]

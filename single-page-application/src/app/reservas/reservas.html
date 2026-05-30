@@ -1,1 +1,290 @@
-<p>reservas works!</p>
+<section class="reservas">
+
+  <!-- Indicador de pasos -->
+  @if (paso < 6) {
+    <nav class="pasos-nav">
+      <span class="paso-item" [class.activo]="paso === 1" [class.completo]="paso > 1">1. Fechas</span>
+      <span class="paso-sep">›</span>
+      <span class="paso-item" [class.activo]="paso === 2" [class.completo]="paso > 2">2. Oferta</span>
+      <span class="paso-sep">›</span>
+      <span class="paso-item" [class.activo]="paso === 3" [class.completo]="paso > 3">3. Habitacion</span>
+      <span class="paso-sep">›</span>
+      <span class="paso-item" [class.activo]="paso === 4" [class.completo]="paso > 4">4. Servicios</span>
+      <span class="paso-sep">›</span>
+      <span class="paso-item" [class.activo]="paso === 5">5. Confirmar</span>
+    </nav>
+  }
+
+  <!-- Error global (usado en varios pasos) -->
+  @if (mensajeError) {
+    <p class="error-general">{{ mensajeError }}</p>
+  }
+
+  <!-- ==================== PASO 1: FECHAS ==================== -->
+  @if (paso === 1) {
+    <h1>Reservar habitacion</h1>
+
+    <form [formGroup]="fechasForm" (ngSubmit)="avanzarFechas()" novalidate>
+
+      <label>
+        Fecha de entrada
+        <input type="date" formControlName="fechaEntrada" [min]="hoy" />
+      </label>
+      @if (erroresBackend['fechaEntrada']) {
+        <small class="error">{{ erroresBackend['fechaEntrada'] }}</small>
+      } @else if (fechasForm.controls.fechaEntrada.invalid && fechasForm.controls.fechaEntrada.touched) {
+        <small class="error">La fecha de entrada es obligatoria.</small>
+      }
+
+      <label>
+        Fecha de salida
+        <input type="date" formControlName="fechaSalida" [min]="hoy" />
+      </label>
+      @if (erroresBackend['fechaSalida']) {
+        <small class="error">{{ erroresBackend['fechaSalida'] }}</small>
+      } @else if (fechasForm.controls.fechaSalida.invalid && fechasForm.controls.fechaSalida.touched) {
+        <small class="error">La fecha de salida es obligatoria.</small>
+      }
+
+      <div class="acciones">
+        <button type="submit">Siguiente →</button>
+      </div>
+
+    </form>
+  }
+
+  <!-- ==================== PASO 2: OFERTA ==================== -->
+  @if (paso === 2) {
+    <h2>Oferta (opcional)</h2>
+    <p class="ayuda">Las ofertas son paquetes con tipo de habitacion y servicios predefinidos a precio fijo por noche. Puedes continuar sin oferta.</p>
+
+    @if (ofertaSeleccionada) {
+      <div class="oferta-activa">
+        <strong>Oferta aplicada:</strong> {{ ofertaSeleccionada.nombre }}
+        · Tipo: {{ ofertaSeleccionada.tipoHabitacion }}
+        · ${{ ofertaSeleccionada.precio }}/noche
+        <button type="button" class="btn-link" (click)="quitarOferta()">Quitar</button>
+      </div>
+    }
+
+    @if (ofertasActivas.length === 0) {
+      <p class="aviso">No hay ofertas activas disponibles.</p>
+    } @else {
+      <ul class="lista-cards">
+        @for (o of ofertasActivas; track o.id) {
+          <li class="card" [class.seleccionada]="ofertaSeleccionada?.id === o.id">
+            <p class="card-titulo">{{ o.nombre }}</p>
+            <p class="card-meta">{{ o.tipoHabitacion }} · ${{ o.precio }}/noche · Hasta {{ o.vigenciaHasta }}</p>
+            <p class="card-desc">{{ o.descripcion }}</p>
+            @if (ofertaSeleccionada?.id === o.id) {
+              <span class="badge-ok">✓ Seleccionada</span>
+            } @else {
+              <button type="button" (click)="seleccionarOferta(o)">Aplicar esta oferta</button>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="acciones">
+      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+      <button type="button" [disabled]="cargandoDisponibilidad" (click)="avanzarOferta()">
+        {{ cargandoDisponibilidad ? 'Buscando...' : 'Buscar habitaciones →' }}
+      </button>
+    </div>
+  }
+
+  <!-- ==================== PASO 3: HABITACION ==================== -->
+  @if (paso === 3) {
+    <h2>Selecciona una habitacion</h2>
+
+    @if (ofertaSeleccionada) {
+      <p class="ayuda">Mostrando habitaciones de tipo <strong>{{ ofertaSeleccionada.tipoHabitacion }}</strong> (definido por la oferta).</p>
+    }
+
+    @if (cargandoDisponibilidad) {
+      <p class="cargando">Buscando habitaciones disponibles...</p>
+    } @else if (habitacionesDisponibles.length === 0) {
+      <p class="aviso">No hay habitaciones disponibles para las fechas indicadas.</p>
+    } @else {
+      <ul class="lista-cards">
+        @for (h of habitacionesDisponibles; track h.id) {
+          <li class="card" [class.seleccionada]="habitacionSeleccionada?.id === h.id">
+            <p class="card-titulo">Habitacion #{{ h.numero }}</p>
+            <p class="card-meta">{{ h.tipo }} · Piso {{ h.piso }} · {{ h.capacidad }} persona(s) · {{ h.tamanoM2 }} m²</p>
+            <p class="card-meta">{{ h.configuracionCamas }}</p>
+            <p class="card-precio">${{ h.precioPorNoche }} / noche</p>
+            @if (h.amenidades && h.amenidades.length > 0) {
+              <p class="card-meta">{{ h.amenidades.join(', ') }}</p>
+            }
+            @if (h.descripcion) {
+              <p class="card-desc">{{ h.descripcion }}</p>
+            }
+            @if (habitacionSeleccionada?.id === h.id) {
+              <span class="badge-ok">✓ Seleccionada</span>
+            } @else {
+              <button type="button" (click)="seleccionarHabitacion(h)">Seleccionar</button>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="acciones">
+      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+      <button type="button"
+        [disabled]="!habitacionSeleccionada || cargandoDisponibilidad"
+        (click)="avanzarHabitacion()">
+        Siguiente →
+      </button>
+    </div>
+  }
+
+  <!-- ==================== PASO 4: SERVICIOS ==================== -->
+  @if (paso === 4) {
+    <h2>Servicios adicionales</h2>
+    <p class="ayuda">Agrega los servicios que desees. Los incluidos en el paquete no tienen costo adicional.</p>
+
+    @if (serviciosActivos.length === 0) {
+      <p class="aviso">No hay servicios disponibles en el catalogo.</p>
+    } @else {
+      <ul class="servicios-lista">
+        @for (s of serviciosActivos; track s.id) {
+          <li class="servicio-item">
+            @if (estaEnBundle(s.id)) {
+              <div class="servicio-bundle">
+                <span class="badge-bundle">✓ Incluido en el paquete</span>
+                <strong>{{ s.nombre }}</strong>
+                <span class="meta">{{ s.categoria }}</span>
+              </div>
+            } @else {
+              <label class="servicio-extra">
+                <input
+                  type="checkbox"
+                  [checked]="estaSeleccionado(s.id)"
+                  (change)="toggleServicio(s.id)"
+                />
+                <span>
+                  <strong>{{ s.nombre }}</strong>
+                  <span class="meta">{{ s.categoria }} · ${{ s.precio }} ({{ s.unidadCobro }})</span>
+                </span>
+              </label>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (erroresBackend['servicios']) {
+      <small class="error">{{ erroresBackend['servicios'] }}</small>
+    }
+
+    <div class="acciones">
+      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+      <button type="button" (click)="avanzarServicios()">Siguiente →</button>
+    </div>
+  }
+
+  <!-- ==================== PASO 5: COTIZAR Y CONFIRMAR ==================== -->
+  @if (paso === 5) {
+    <h2>Resumen y confirmacion</h2>
+
+    <div class="resumen-box">
+      <p><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</p>
+      @if (ofertaSeleccionada) {
+        <p><strong>Oferta:</strong> {{ ofertaSeleccionada.nombre }}</p>
+      }
+      <p>
+        <strong>Entrada:</strong> {{ fechasForm.value.fechaEntrada }}
+        &nbsp;·&nbsp;
+        <strong>Salida:</strong> {{ fechasForm.value.fechaSalida }}
+      </p>
+    </div>
+
+    <form [formGroup]="emailForm" novalidate>
+      <label>
+        Email de contacto
+        <input type="email" formControlName="emailContacto" autocomplete="email" />
+      </label>
+      @if (emailForm.controls.emailContacto.invalid && emailForm.controls.emailContacto.touched) {
+        <small class="error">Ingresa un email valido.</small>
+      }
+    </form>
+
+    @if (!desglose) {
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+        <button type="button" [disabled]="cotizando" (click)="cotizar()">
+          {{ cotizando ? 'Calculando...' : 'Ver cotizacion' }}
+        </button>
+      </div>
+    }
+
+    @if (desglose) {
+      <div class="desglose">
+        <h3>Desglose del costo</h3>
+        <table class="tabla-desglose">
+          <tbody>
+            <tr>
+              <td>{{ desglose.concepto }}</td>
+              <td>${{ desglose.precioPorNoche }} × {{ desglose.noches }} noche(s)</td>
+              <td class="monto">${{ desglose.subtotalAlojamiento }}</td>
+            </tr>
+            @for (sv of desglose.serviciosAdicionales; track sv.servicioId) {
+              <tr>
+                <td>{{ sv.nombre }}</td>
+                <td class="meta-celda">cobro plano</td>
+                <td class="monto">${{ sv.precio }}</td>
+              </tr>
+            }
+            @if (desglose.serviciosAdicionales.length === 0) {
+              <tr>
+                <td colspan="3" class="meta-celda">Sin servicios adicionales cobrados.</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="fila-total">
+              <td colspan="2"><strong>TOTAL</strong></td>
+              <td class="monto total"><strong>${{ desglose.montoTotal }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      @if (erroresBackend['perfil'] || erroresBackend['habitacion']) {
+        <p class="error-general">
+          {{ erroresBackend['perfil'] || erroresBackend['habitacion'] }}
+        </p>
+      }
+
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+        <button type="button" class="btn-confirmar" [disabled]="confirmando" (click)="confirmar()">
+          {{ confirmando ? 'Confirmando...' : 'Confirmar reserva' }}
+        </button>
+      </div>
+    }
+  }
+
+  <!-- ==================== PASO 6: CONFIRMADO ==================== -->
+  @if (paso === 6 && reservaCreada) {
+    <div class="confirmado">
+      <div class="icono-ok">✓</div>
+      <h2>¡Reserva confirmada!</h2>
+      <p class="exito-msg">Tu reserva esta activa. Se envio un correo de confirmacion a <strong>{{ reservaCreada.emailContacto }}</strong>.</p>
+
+      <ul class="detalle-reserva">
+        <li><strong>ID de reserva:</strong> <code>{{ reservaCreada.id }}</code></li>
+        <li><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</li>
+        <li><strong>Entrada:</strong> {{ reservaCreada.fechaEntrada }}</li>
+        <li><strong>Salida:</strong> {{ reservaCreada.fechaSalida }}</li>
+        <li><strong>Total:</strong> ${{ reservaCreada.montoTotal }}</li>
+        <li><strong>Estado:</strong> {{ reservaCreada.estado }}</li>
+      </ul>
+
+      <button type="button" (click)="nuevaReserva()">Hacer otra reserva</button>
+    </div>
+  }
+
+</section>

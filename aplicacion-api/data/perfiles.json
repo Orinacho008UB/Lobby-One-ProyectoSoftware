@@ -6,4 +6,36 @@
   "cedula" : "29631016",
   "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$76sdnPRajDKGxkxO/P0WjA$Xd8mOjgEGfgEJCtg4RFgxU1Jlk49NQHnSVbrYNrXT6E",
   "rol" : "ADMINISTRADOR"
+}, {
+  "id" : "d27b4b27-6f65-43b7-8baf-d2aa32d5777d",
+  "nombre" : "Ana Prueba",
+  "email" : "ana.prueba.1578817123@test.com",
+  "telefono" : "0412-1234567",
+  "cedula" : "V-12345678",
+  "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$PYdXAmoed7WZdX+vvbq1bg$lUHfq1ctmT62mWZDJmU1gSAJ+6Y9SIyioncDOgaichs",
+  "rol" : "CLIENTE"
+}, {
+  "id" : "6121ee48-9a95-406b-a786-cd09d7eb5a4b",
+  "nombre" : "Cliente E2E",
+  "email" : "prueba.e2e.5732@test.com",
+  "telefono" : "0412-0000001",
+  "cedula" : "V-99999999",
+  "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$p6/mz54XTGtBae/GxnbO8w$bzYIUefql3rXbMUTMvM8GVt44w6wCsHGSHsP/lj+9e4",
+  "rol" : "CLIENTE"
+}, {
+  "id" : "ddb605b9-3292-40b7-8b36-7f50e6313ecf",
+  "nombre" : "Admin Test",
+  "email" : "admin.test@hotel.com",
+  "telefono" : "0414-9999999",
+  "cedula" : "V-11111111",
+  "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$iFvLg/b61Q3fI+R6IwYb2A$smlDs1ucytCRJkHeg+uNwq1V0H2Gg99kuXMpyZSqM+g",
+  "rol" : "ADMINISTRADOR"
+}, {
+  "id" : "97335e9c-fd9a-44da-acea-9256ebf57286",
+  "nombre" : "Juan",
+  "email" : "Juan@gmail.com",
+  "telefono" : "04129259201",
+  "cedula" : "28391034",
+  "contrasenaHash" : "$argon2id$v=19$m=16384,t=2,p=1$IcpN8/LsvEMprS1VOQsW3Q$loJ3l1xruuNrCo6y9y8WeJE/LF9l6OMkd/GYA1WUyRs",
+  "rol" : "CLIENTE"
 } ]

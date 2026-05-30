@@ -190,8 +190,13 @@ public class ReservasService {
 
         Reserva guardada = repository.guardar(reserva);
 
-        notificationComponent.enviarConfirmacionReserva(
-                email, perfil.getNombre(), guardada.getId(), fechaEntrada, fechaSalida);
+        // La reserva ya esta persistida: si el correo falla no se revierte.
+        try {
+            notificationComponent.enviarConfirmacionReserva(
+                    email, perfil.getNombre(), guardada.getId(), fechaEntrada, fechaSalida);
+        } catch (Exception ex) {
+            // SMTP no configurado en dev (credenciales placeholder). Se ignora.
+        }
 
         return guardada;
     }

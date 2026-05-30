@@ -1,1 +1,164 @@
-<p>servicios works!</p>
+<section class="servicios">
+  <h1>Crear servicio</h1>
+
+  @if (mensajeExito) {
+    <p class="exito">{{ mensajeExito }}</p>
+  }
+  @if (mensajeError) {
+    <p class="error-general">{{ mensajeError }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="crear()" novalidate>
+
+    <label>
+      Nombre
+      <input type="text" formControlName="nombre" />
+    </label>
+    @if (erroresBackend['nombre']) {
+      <small class="error">{{ erroresBackend['nombre'] }}</small>
+    } @else if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+      <small class="error">El nombre es obligatorio.</small>
+    }
+
+    <label>
+      Categoria
+      <input type="text" formControlName="categoria" placeholder="Ej: Spa, Gastronomia, Transporte" />
+    </label>
+    @if (erroresBackend['categoria']) {
+      <small class="error">{{ erroresBackend['categoria'] }}</small>
+    } @else if (form.controls.categoria.invalid && form.controls.categoria.touched) {
+      <small class="error">La categoria es obligatoria.</small>
+    }
+
+    <label>
+      Precio
+      <input type="number" formControlName="precio" min="0.01" step="0.01" />
+    </label>
+    @if (erroresBackend['precio']) {
+      <small class="error">{{ erroresBackend['precio'] }}</small>
+    } @else if (form.controls.precio.invalid && form.controls.precio.touched) {
+      <small class="error">El precio debe ser mayor que 0.</small>
+    }
+
+    <label>
+      Unidad de cobro
+      <input type="text" formControlName="unidadCobro" placeholder="Ej: por persona, por hora, por uso" />
+    </label>
+    @if (erroresBackend['unidadCobro']) {
+      <small class="error">{{ erroresBackend['unidadCobro'] }}</small>
+    } @else if (form.controls.unidadCobro.invalid && form.controls.unidadCobro.touched) {
+      <small class="error">La unidad de cobro es obligatoria.</small>
+    }
+
+    <label>
+      Descripcion corta
+      <textarea formControlName="descripcionCorta" rows="2"></textarea>
+    </label>
+    @if (erroresBackend['descripcionCorta']) {
+      <small class="error">{{ erroresBackend['descripcionCorta'] }}</small>
+    } @else if (form.controls.descripcionCorta.invalid && form.controls.descripcionCorta.touched) {
+      <small class="error">La descripcion corta es obligatoria.</small>
+    }
+
+    <label>
+      Estado
+      <select formControlName="estado">
+        <option [ngValue]="null" disabled>Selecciona un estado</option>
+        @for (e of estados; track e) {
+          <option [ngValue]="e">{{ e }}</option>
+        }
+      </select>
+    </label>
+    @if (erroresBackend['estado']) {
+      <small class="error">{{ erroresBackend['estado'] }}</small>
+    } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
+      <small class="error">El estado es obligatorio.</small>
+    }
+
+    <!-- Disponibilidad de horarios (FormArray) -->
+    <fieldset class="horarios" formArrayName="disponibilidadHorarios">
+      <legend>Disponibilidad de horarios</legend>
+
+      @if (erroresBackend['disponibilidadHorarios']) {
+        <small class="error">{{ erroresBackend['disponibilidadHorarios'] }}</small>
+      }
+
+      @for (h of horarios.controls; track $index; let i = $index) {
+        <div [formGroupName]="i" class="horario">
+          <label class="horario-dia">
+            Dia
+            <select formControlName="dia">
+              <option value="" disabled>Selecciona</option>
+              @for (d of dias; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+            @if (horarioControl(i, 'dia')?.invalid && horarioControl(i, 'dia')?.touched) {
+              <small class="error">Obligatorio.</small>
+            }
+          </label>
+
+          <label class="horario-hora">
+            Hora inicio
+            <input type="time" formControlName="horaInicio" />
+            @if (horarioControl(i, 'horaInicio')?.invalid && horarioControl(i, 'horaInicio')?.touched) {
+              <small class="error">Obligatorio.</small>
+            }
+          </label>
+
+          <label class="horario-hora">
+            Hora fin
+            <input type="time" formControlName="horaFin" />
+            @if (horarioControl(i, 'horaFin')?.invalid && horarioControl(i, 'horaFin')?.touched) {
+              <small class="error">Obligatorio.</small>
+            }
+          </label>
+
+          @if (horarios.length > 1) {
+            <button type="button" class="btn-quitar" (click)="quitarHorario(i)">Quitar</button>
+          }
+        </div>
+      }
+
+      <button type="button" class="btn-agregar" (click)="agregarHorario()">+ Agregar horario</button>
+    </fieldset>
+
+    <label>
+      Imagen de portada
+      <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
+    </label>
+    @if (errorImagen) {
+      <small class="error">{{ errorImagen }}</small>
+    }
+
+    <!-- Campos opcionales -->
+    <fieldset class="opcionales">
+      <legend>Opcionales</legend>
+
+      <label>
+        Descripcion detallada
+        <textarea formControlName="descripcionDetallada" rows="3"></textarea>
+      </label>
+
+      <label>
+        Ubicacion
+        <input type="text" formControlName="ubicacion" placeholder="Ej: Planta baja, Nivel 2" />
+      </label>
+
+      <label>
+        Capacidad maxima
+        <input type="number" formControlName="capacidadMaxima" min="1" />
+      </label>
+
+      <label>
+        Requisitos / restricciones
+        <textarea formControlName="requisitosRestricciones" rows="2"></textarea>
+      </label>
+    </fieldset>
+
+    <button type="submit" [disabled]="enviando">
+      {{ enviando ? 'Creando...' : 'Crear servicio' }}
+    </button>
+
+  </form>
+</section>

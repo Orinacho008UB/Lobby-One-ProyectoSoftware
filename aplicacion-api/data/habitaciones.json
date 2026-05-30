@@ -1,0 +1,29 @@
+[ {
+  "id" : "2241e8e8-7814-4224-8f00-641ce7814ca4",
+  "numero" : 123,
+  "piso" : 3,
+  "tipo" : "INDIVIDUAL",
+  "descripcion" : "Acogedor",
+  "configuracionCamas" : "1 cama king",
+  "capacidad" : 2,
+  "tamanoM2" : 35.0,
+  "precioPorNoche" : 140,
+  "estado" : "DISPONIBLE",
+  "imagenPortada" : "c984e7e2-09c3-4f0e-a725-3b99e8649e4e.jpeg",
+  "imagenesAdicionales" : null,
+  "amenidades" : [ "wifi", "tv", "balcon" ]
+}, {
+  "id" : "79251cc9-e894-4439-a7cd-e054de143540",
+  "numero" : 999,
+  "piso" : 10,
+  "tipo" : "SUITE",
+  "descripcion" : "Suite de prueba E2E",
+  "configuracionCamas" : "2 camas queen",
+  "capacidad" : 4,
+  "tamanoM2" : 120.5,
+  "precioPorNoche" : 350,
+  "estado" : "DISPONIBLE",
+  "imagenPortada" : "4d8d104e-0ae3-4310-a179-fc0fa11d4db4.jpg",
+  "imagenesAdicionales" : null,
+  "amenidades" : [ "wifi", "jacuzzi", "minibar" ]
+} ]

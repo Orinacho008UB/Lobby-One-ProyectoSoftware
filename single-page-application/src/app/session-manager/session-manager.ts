@@ -7,6 +7,7 @@ export interface UsuarioSesion {
   id: string;
   nombre: string;
   rol: Rol;
+  email: string;
 }
 
 /**
@@ -27,9 +28,9 @@ export class SessionManager {
   /** Usuario autenticado actual (o null). Reactivo para componentes y guards. */
   readonly usuario = this._usuario.asReadonly();
 
-  /** Guarda la sesion tras un login exitoso (solo id, nombre y rol). */
+  /** Guarda la sesion tras un login exitoso (id, nombre, rol y email). */
   iniciarSesion(perfil: UsuarioSesion): void {
-    const sesion: UsuarioSesion = { id: perfil.id, nombre: perfil.nombre, rol: perfil.rol };
+    const sesion: UsuarioSesion = { id: perfil.id, nombre: perfil.nombre, rol: perfil.rol, email: perfil.email };
     this._usuario.set(sesion);
     this.persistir(sesion);
   }
@@ -64,7 +65,13 @@ export class SessionManager {
         typeof datos.nombre === 'string' &&
         (datos.rol === 'CLIENTE' || datos.rol === 'ADMINISTRADOR')
       ) {
-        return { id: datos.id, nombre: datos.nombre, rol: datos.rol };
+        return {
+          id: datos.id,
+          nombre: datos.nombre,
+          rol: datos.rol,
+          // Compatibilidad con sesiones anteriores sin email.
+          email: typeof datos.email === 'string' ? datos.email : '',
+        };
       }
     } catch {
       // Dato corrupto en localStorage: se ignora y se trata como sin sesion.

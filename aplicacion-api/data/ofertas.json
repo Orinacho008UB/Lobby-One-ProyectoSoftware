@@ -1,0 +1,12 @@
+[ {
+  "id" : "64d5b1f9-1bad-4aa1-8943-9b16c74a7a8e",
+  "nombre" : "Paquete Desayuno Ejecutivo",
+  "descripcion" : "Habitacion individual con desayuno continental incluido",
+  "tipoHabitacion" : "INDIVIDUAL",
+  "serviciosIncluidos" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "precio" : 180.00,
+  "vigenciaDesde" : "2026-05-30",
+  "vigenciaHasta" : "2026-06-28",
+  "estado" : "ACTIVA",
+  "imagenPortada" : "7dfe7e61-a039-471f-8cb3-8e46c94be14e.png"
+} ]

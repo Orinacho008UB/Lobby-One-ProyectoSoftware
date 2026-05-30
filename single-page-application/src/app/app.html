@@ -1,2 +1,28 @@
-<!-- Shell de la SPA: el contenido de cada ruta se renderiza en el outlet. -->
+<!-- Shell de la SPA: barra de navegacion contextual + outlet de rutas. -->
+
+@if (sesion.estaAutenticado()) {
+  <nav class="nav-principal">
+    <span class="nav-marca">LobbyOne</span>
+
+    @if (sesion.esAdministrador()) {
+      <a routerLink="/admin/habitaciones/nueva" routerLinkActive="activo">Nueva habitacion</a>
+      <a routerLink="/admin/servicios/nuevo" routerLinkActive="activo">Nuevo servicio</a>
+      <a routerLink="/admin/ofertas/nueva" routerLinkActive="activo">Nueva oferta</a>
+    } @else {
+      <a routerLink="/reservar" routerLinkActive="activo">Reservar</a>
+    }
+
+    <a routerLink="/perfil" routerLinkActive="activo">Mi perfil</a>
+
+    <span class="nav-usuario">{{ sesion.usuario()?.nombre }}</span>
+    <button type="button" class="btn-cerrar" (click)="cerrarSesion()">Cerrar sesion</button>
+  </nav>
+} @else {
+  <nav class="nav-principal">
+    <span class="nav-marca">LobbyOne</span>
+    <a routerLink="/login" routerLinkActive="activo">Iniciar sesion</a>
+    <a routerLink="/registro" routerLinkActive="activo">Registrarse</a>
+  </nav>
+}
+
 <router-outlet />

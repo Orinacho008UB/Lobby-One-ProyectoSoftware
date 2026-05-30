@@ -1,0 +1,20 @@
+[ {
+  "id" : "8ec39251-a933-4e8d-884b-2eebd09f01ad",
+  "nombre" : "Desayuno Continental",
+  "descripcionCorta" : "Desayuno completo en la habitacion",
+  "categoria" : "Gastronomia",
+  "unidadCobro" : "por persona",
+  "precio" : 25.00,
+  "estado" : "ACTIVO",
+  "disponibilidadHorarios" : [ {
+    "dia" : "Lunes",
+    "horaInicio" : "07:00:00",
+    "horaFin" : "10:30:00"
+  } ],
+  "imagenPortada" : "4f1a1042-f9a8-486d-925f-941f3b86f85f.png",
+  "descripcionDetallada" : null,
+  "ubicacion" : null,
+  "capacidadMaxima" : null,
+  "requisitosRestricciones" : null,
+  "imagenesAdicionales" : null
+} ]

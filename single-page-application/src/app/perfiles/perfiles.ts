@@ -111,7 +111,7 @@ export class Perfiles implements OnInit {
     this.api.login(email, contrasena).subscribe({
       next: (perfil: Perfil) => {
         this.enviando = false;
-        this.sesion.iniciarSesion({ id: perfil.id, nombre: perfil.nombre, rol: perfil.rol });
+        this.sesion.iniciarSesion({ id: perfil.id, nombre: perfil.nombre, rol: perfil.rol, email: perfil.email });
         const destino = perfil.rol === 'ADMINISTRADOR' ? '/admin/habitaciones/nueva' : '/reservar';
         this.router.navigateByUrl(destino);
       },

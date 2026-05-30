@@ -1,1 +1,137 @@
-<p>ofertas works!</p>
+<section class="ofertas">
+  <h1>Crear oferta</h1>
+
+  @if (mensajeExito) {
+    <p class="exito">{{ mensajeExito }}</p>
+  }
+  @if (mensajeError) {
+    <p class="error-general">{{ mensajeError }}</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="crear()" novalidate>
+
+    <label>
+      Nombre
+      <input type="text" formControlName="nombre" />
+    </label>
+    @if (erroresBackend['nombre']) {
+      <small class="error">{{ erroresBackend['nombre'] }}</small>
+    } @else if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+      <small class="error">El nombre es obligatorio.</small>
+    }
+
+    <label>
+      Descripcion
+      <textarea formControlName="descripcion" rows="3"></textarea>
+    </label>
+    @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
+      <small class="error">La descripcion es obligatoria.</small>
+    }
+
+    <label>
+      Tipo de habitacion
+      <select formControlName="tipoHabitacion">
+        <option [ngValue]="null" disabled>Selecciona un tipo</option>
+        @for (t of tipos; track t) {
+          <option [ngValue]="t">{{ t }}</option>
+        }
+      </select>
+    </label>
+    @if (erroresBackend['tipoHabitacion']) {
+      <small class="error">{{ erroresBackend['tipoHabitacion'] }}</small>
+    } @else if (form.controls.tipoHabitacion.invalid && form.controls.tipoHabitacion.touched) {
+      <small class="error">El tipo de habitacion es obligatorio.</small>
+    }
+
+    <!-- Seleccion de servicios incluidos -->
+    <fieldset class="servicios-panel">
+      <legend>Servicios incluidos (al menos uno)</legend>
+
+      @if (cargandoServicios) {
+        <p class="cargando">Cargando servicios activos...</p>
+      } @else if (serviciosActivos.length === 0) {
+        <p class="aviso">No hay servicios activos disponibles en el catalogo.</p>
+      } @else {
+        <ul class="servicios-lista">
+          @for (s of serviciosActivos; track s.id) {
+            <li>
+              <label class="servicio-item">
+                <input
+                  type="checkbox"
+                  [checked]="estaSeleccionado(s.id)"
+                  (change)="toggleServicio(s.id)"
+                />
+                <span>
+                  <strong>{{ s.nombre }}</strong>
+                  <span class="servicio-meta">{{ s.categoria }} · ${{ s.precio }}</span>
+                </span>
+              </label>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (errorServicios) {
+        <small class="error">{{ errorServicios }}</small>
+      }
+    </fieldset>
+
+    <label>
+      Precio fijo (por noche)
+      <input type="number" formControlName="precio" min="0.01" step="0.01" />
+    </label>
+    @if (erroresBackend['precio']) {
+      <small class="error">{{ erroresBackend['precio'] }}</small>
+    } @else if (form.controls.precio.invalid && form.controls.precio.touched) {
+      <small class="error">El precio debe ser mayor que 0.</small>
+    }
+
+    <label>
+      Vigencia desde
+      <input type="date" formControlName="vigenciaDesde" [min]="hoy" />
+    </label>
+    @if (erroresBackend['vigenciaDesde']) {
+      <small class="error">{{ erroresBackend['vigenciaDesde'] }}</small>
+    } @else if (form.controls.vigenciaDesde.invalid && form.controls.vigenciaDesde.touched) {
+      <small class="error">La fecha de inicio de vigencia es obligatoria.</small>
+    }
+
+    <label>
+      Vigencia hasta
+      <input type="date" formControlName="vigenciaHasta" [min]="manana" />
+    </label>
+    @if (erroresBackend['vigenciaHasta']) {
+      <small class="error">{{ erroresBackend['vigenciaHasta'] }}</small>
+    } @else if (form.controls.vigenciaHasta.invalid && form.controls.vigenciaHasta.touched) {
+      <small class="error">La fecha de fin de vigencia es obligatoria.</small>
+    }
+
+    <label>
+      Estado
+      <select formControlName="estado">
+        <option [ngValue]="null" disabled>Selecciona un estado</option>
+        @for (e of estados; track e) {
+          <option [ngValue]="e">{{ e }}</option>
+        }
+      </select>
+    </label>
+    @if (erroresBackend['estado']) {
+      <small class="error">{{ erroresBackend['estado'] }}</small>
+    } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
+      <small class="error">El estado es obligatorio.</small>
+    }
+
+    <label>
+      Imagen de portada
+      <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
+    </label>
+    @if (errorImagen) {
+      <small class="error">{{ errorImagen }}</small>
+    }
+
+    <button type="submit" [disabled]="enviando">
+      {{ enviando ? 'Creando...' : 'Crear oferta' }}
+    </button>
+
+  </form>
+</section>
