@@ -86,6 +86,15 @@ export class Perfiles implements OnInit {
   });
 
   ngOnInit(): void {
+    // Mirror del cache compartido: los arreglos locales se rellenan al instante
+    // (incluso al volver de otra ruta) desde los BehaviorSubject del ApiClient.
+    this.api.perfiles$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((perfiles) => { this.perfiles = perfiles; });
+    this.api.reservas$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((reservas) => { this.reservas = reservas; });
+
     this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data) => {
       const vistaRuta = (data['vista'] as Vista) ?? 'login';
       this.vista.set(vistaRuta);
@@ -142,18 +151,16 @@ export class Perfiles implements OnInit {
   }
 
   cargarDatosListado(): void {
-    this.cargando = true;
+    // Spinner solo si el cache de perfiles aun esta vacio; los datos cacheados
+    // se ven al instante y la recarga corre en segundo plano (via los mirrors).
+    this.cargando = this.api.perfilesActuales.length === 0;
     this.errorCarga = '';
-    this.api.consultarTodosPerfiles().subscribe({
-      next: (perfiles) => {
-        this.perfiles = perfiles;
-        this.api.consultarReservas().subscribe({
-          next: (reservas) => { this.reservas = reservas; this.cargando = false; },
-          error: () => { this.reservas = []; this.cargando = false; },
-        });
-      },
+    this.api.refrescarPerfiles().subscribe({
+      next: () => { this.cargando = false; },
       error: () => { this.errorCarga = 'Error al cargar los huéspedes.'; this.cargando = false; },
     });
+    // Las reservas alimentan la clasificacion (VIP/Frecuente/...); recarga en 2do plano.
+    this.api.refrescarReservas().subscribe({ next: () => {}, error: () => {} });
   }
 
   irALista(): void {
@@ -246,8 +253,8 @@ export class Perfiles implements OnInit {
         this.guardandoNotas = false;
         this.notasEditando = false;
         this.perfilSeleccionado = actualizado;
-        const idx = this.perfiles.findIndex(p => p.id === actualizado.id);
-        if (idx !== -1) { this.perfiles[idx] = actualizado; }
+        // Actualiza el cache compartido (el mirror local se sincroniza solo).
+        this.api.actualizarPerfilEnCache(actualizado);
       },
       error: () => {
         this.guardandoNotas = false;

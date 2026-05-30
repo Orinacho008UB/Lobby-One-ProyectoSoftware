@@ -8,21 +8,23 @@
       <button type="button" (click)="irAFormulario()">+ Nuevo servicio</button>
     </div>
 
-    <!-- KPIs -->
-    <div class="metricas">
-      <div class="metrica">
-        <span class="metrica-numero">{{ totalServicios }}</span>
-        <span class="metrica-label">Total</span>
+    <!-- KPIs (derivados del cache compartido) -->
+    @if (resumen$ | async; as resumen) {
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-numero">{{ resumen.total }}</span>
+          <span class="metrica-label">Total</span>
+        </div>
+        <div class="metrica metrica-verde">
+          <span class="metrica-numero">{{ resumen.activos }}</span>
+          <span class="metrica-label">Activos</span>
+        </div>
+        <div class="metrica metrica-gris">
+          <span class="metrica-numero">{{ resumen.inactivos }}</span>
+          <span class="metrica-label">Inactivos</span>
+        </div>
       </div>
-      <div class="metrica metrica-verde">
-        <span class="metrica-numero">{{ totalActivos }}</span>
-        <span class="metrica-label">Activos</span>
-      </div>
-      <div class="metrica metrica-gris">
-        <span class="metrica-numero">{{ totalInactivos }}</span>
-        <span class="metrica-label">Inactivos</span>
-      </div>
-    </div>
+    }
 
     <!-- Filtros -->
     <div class="filtros">
@@ -47,11 +49,11 @@
       <p class="cargando">Cargando servicios...</p>
     } @else if (errorCarga) {
       <p class="error-general">{{ errorCarga }}</p>
-    } @else if (serviciosFiltrados.length === 0) {
+    } @else if (((serviciosFiltrados$ | async) ?? []).length === 0) {
       <p class="aviso">No hay servicios que coincidan con los filtros.</p>
     } @else {
       <ul class="lista-servicios">
-        @for (s of serviciosFiltrados; track s.id) {
+        @for (s of (serviciosFiltrados$ | async) ?? []; track s.id) {
           <li class="card-servicio">
             <div class="card-servicio-header">
               <div>

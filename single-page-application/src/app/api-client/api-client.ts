@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 
 // ===========================================================================
 // Tipos del dominio (coherentes con los modelos del backend Spring Boot).
@@ -201,7 +201,120 @@ export interface ApiError {
 export class ApiClient {
   private readonly baseUrl = 'http://localhost:8080';
 
+  // === Estado compartido del catalogo de habitaciones (cache en RAM) ========
+  // Patron "single source of truth" reactivo. El catalogo vive en este
+  // singleton (providedIn: 'root'), asi que persiste en memoria aunque los
+  // componentes que lo consumen se destruyan al cambiar de ruta. Cuando un
+  // componente se vuelve a montar y se re-suscribe, el BehaviorSubject reemite
+  // de inmediato (0 ms) el ultimo catalogo conocido: la lista nunca queda en
+  // blanco mientras llega la respuesta fresca del backend.
+  private readonly habitacionesSubject = new BehaviorSubject<Habitacion[]>([]);
+
+  /** Stream publico del catalogo; los componentes lo consumen con `| async`. */
+  readonly habitaciones$ = this.habitacionesSubject.asObservable();
+
+  // Mismo patron para el resto de catalogos compartidos entre rutas: cada
+  // BehaviorSubject es la "fuente unica de verdad" en RAM y sobrevive a la
+  // destruccion de los componentes. Los listados usan los endpoints "todos".
+  private readonly serviciosSubject = new BehaviorSubject<Servicio[]>([]);
+  readonly servicios$ = this.serviciosSubject.asObservable();
+
+  private readonly ofertasSubject = new BehaviorSubject<Oferta[]>([]);
+  readonly ofertas$ = this.ofertasSubject.asObservable();
+
+  private readonly perfilesSubject = new BehaviorSubject<Perfil[]>([]);
+  readonly perfiles$ = this.perfilesSubject.asObservable();
+
+  private readonly reservasSubject = new BehaviorSubject<Reserva[]>([]);
+  readonly reservas$ = this.reservasSubject.asObservable();
+
   constructor(private readonly http: HttpClient) {}
+
+  /** Snapshot sincrono del catalogo cacheado (p.ej. para decidir si mostrar spinner). */
+  get habitacionesActuales(): Habitacion[] {
+    return this.habitacionesSubject.value;
+  }
+
+  get serviciosActuales(): Servicio[] { return this.serviciosSubject.value; }
+  get ofertasActuales(): Oferta[] { return this.ofertasSubject.value; }
+  get perfilesActuales(): Perfil[] { return this.perfilesSubject.value; }
+  get reservasActuales(): Reserva[] { return this.reservasSubject.value; }
+
+  /**
+   * Fuerza la recarga del catalogo desde el backend y empuja el resultado al
+   * BehaviorSubject (lo que refresca a TODOS los suscriptores actuales). Devuelve
+   * el Observable para que quien dispare la recarga gestione su propio spinner /
+   * error; la actualizacion del cache ocurre via `tap`, independientemente de eso.
+   */
+  refrescarHabitaciones(): Observable<Habitacion[]> {
+    return this.http
+      .get<Habitacion[]>(`${this.baseUrl}/habitaciones`)
+      .pipe(
+        tap((habitaciones) => this.habitacionesSubject.next(habitaciones)),
+        catchError((e: HttpErrorResponse) => this.manejarError(e)),
+      );
+  }
+
+  /** Recarga el catalogo completo de servicios y lo empuja al cache. */
+  refrescarServicios(): Observable<Servicio[]> {
+    return this.http
+      .get<Servicio[]>(`${this.baseUrl}/servicios/todos`)
+      .pipe(
+        tap((servicios) => this.serviciosSubject.next(servicios)),
+        catchError((e: HttpErrorResponse) => this.manejarError(e)),
+      );
+  }
+
+  /** Recarga el catalogo completo de ofertas y lo empuja al cache. */
+  refrescarOfertas(): Observable<Oferta[]> {
+    return this.http
+      .get<Oferta[]>(`${this.baseUrl}/ofertas/todos`)
+      .pipe(
+        tap((ofertas) => this.ofertasSubject.next(ofertas)),
+        catchError((e: HttpErrorResponse) => this.manejarError(e)),
+      );
+  }
+
+  /** Recarga todos los perfiles y los empuja al cache. */
+  refrescarPerfiles(): Observable<Perfil[]> {
+    return this.http
+      .get<Perfil[]>(`${this.baseUrl}/perfiles/todos`)
+      .pipe(
+        tap((perfiles) => this.perfilesSubject.next(perfiles)),
+        catchError((e: HttpErrorResponse) => this.manejarError(e)),
+      );
+  }
+
+  /** Recarga todas las reservas y las empuja al cache. */
+  refrescarReservas(): Observable<Reserva[]> {
+    return this.http
+      .get<Reserva[]>(`${this.baseUrl}/reservas`)
+      .pipe(
+        tap((reservas) => this.reservasSubject.next(reservas)),
+        catchError((e: HttpErrorResponse) => this.manejarError(e)),
+      );
+  }
+
+  // Upserts en cache: tras una mutacion puntual (cambiar estado, editar notas)
+  // sustituyen el elemento en el BehaviorSubject sin volver a pedir toda la lista,
+  // de modo que TODOS los suscriptores ven el cambio al instante.
+  actualizarServicioEnCache(servicio: Servicio): void {
+    this.serviciosSubject.next(
+      this.serviciosSubject.value.map((s) => (s.id === servicio.id ? servicio : s)),
+    );
+  }
+
+  actualizarOfertaEnCache(oferta: Oferta): void {
+    this.ofertasSubject.next(
+      this.ofertasSubject.value.map((o) => (o.id === oferta.id ? oferta : o)),
+    );
+  }
+
+  actualizarPerfilEnCache(perfil: Perfil): void {
+    this.perfilesSubject.next(
+      this.perfilesSubject.value.map((p) => (p.id === perfil.id ? perfil : p)),
+    );
+  }
 
   // --- Perfiles ---
 

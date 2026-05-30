@@ -46,4 +46,40 @@
   "montoTotal" : 280,
   "emailContacto" : "prueba.e2e.5732@test.com",
   "fechaCreacion" : "2026-05-29T19:36:07.9418061"
+}, {
+  "id" : "7cca8743-dfe0-4983-abaa-3f6dae70a999",
+  "perfilId" : "97335e9c-fd9a-44da-acea-9256ebf57286",
+  "habitacionId" : "99127f37-ee42-46c2-9206-c7712a314a74",
+  "serviciosContratados" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "ofertaAplicada" : null,
+  "fechaEntrada" : "2026-05-30",
+  "fechaSalida" : "2026-05-31",
+  "estado" : "ACTIVA",
+  "montoTotal" : 702.00,
+  "emailContacto" : "Juan@gmail.com",
+  "fechaCreacion" : "2026-05-30T09:55:12.767048"
+}, {
+  "id" : "c3521f1a-f007-4842-abf6-477fd97ab640",
+  "perfilId" : "97335e9c-fd9a-44da-acea-9256ebf57286",
+  "habitacionId" : "99127f37-ee42-46c2-9206-c7712a314a74",
+  "serviciosContratados" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "ofertaAplicada" : "64d5b1f9-1bad-4aa1-8943-9b16c74a7a8e",
+  "fechaEntrada" : "2026-06-01",
+  "fechaSalida" : "2026-06-05",
+  "estado" : "ACTIVA",
+  "montoTotal" : 720.00,
+  "emailContacto" : "Juan@gmail.com",
+  "fechaCreacion" : "2026-05-30T09:56:44.739577"
+}, {
+  "id" : "f3d95a44-7944-4967-aa18-22d0723aba43",
+  "perfilId" : "97335e9c-fd9a-44da-acea-9256ebf57286",
+  "habitacionId" : "99127f37-ee42-46c2-9206-c7712a314a74",
+  "serviciosContratados" : [ "8ec39251-a933-4e8d-884b-2eebd09f01ad" ],
+  "ofertaAplicada" : "64d5b1f9-1bad-4aa1-8943-9b16c74a7a8e",
+  "fechaEntrada" : "2026-06-06",
+  "fechaSalida" : "2026-06-07",
+  "estado" : "ACTIVA",
+  "montoTotal" : 180.00,
+  "emailContacto" : "Juan@gmail.com",
+  "fechaCreacion" : "2026-05-30T10:42:47.131294"
 } ]

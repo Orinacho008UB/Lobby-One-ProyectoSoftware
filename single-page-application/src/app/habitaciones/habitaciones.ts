@@ -1,8 +1,8 @@
-import { Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 import {
   ApiClient,
@@ -23,11 +23,12 @@ import {
   templateUrl: './habitaciones.html',
   styleUrl: './habitaciones.css',
 })
-export class Habitaciones implements OnInit, OnDestroy {
+export class Habitaciones implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly destruir$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
+  private timeoutVolver: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly tipos: TipoHabitacion[] = ['INDIVIDUAL', 'DOBLE', 'SUITE'];
   protected readonly estados: EstadoHabitacion[] = [
@@ -40,12 +41,47 @@ export class Habitaciones implements OnInit, OnDestroy {
   // Vista activa
   protected vista: 'lista' | 'formulario' | 'detalle' = 'lista';
 
-  // Listado
-  protected habitaciones: Habitacion[] = [];
+  // Listado (reactivo): la fuente de verdad vive en el ApiClient, no aqui.
   protected cargando = false;
   protected errorCarga = '';
-  protected filtroEstado = '';
-  protected filtroTipo = '';
+
+  // Filtros como stream: ngModel escribe via getter/setter y empuja al subject,
+  // de modo que la lista filtrada se recompone sola.
+  private readonly filtros$ = new BehaviorSubject<{ estado: string; tipo: string }>({
+    estado: '',
+    tipo: '',
+  });
+
+  get filtroEstado(): string { return this.filtros$.value.estado; }
+  set filtroEstado(estado: string) { this.filtros$.next({ ...this.filtros$.value, estado }); }
+  get filtroTipo(): string { return this.filtros$.value.tipo; }
+  set filtroTipo(tipo: string) { this.filtros$.next({ ...this.filtros$.value, tipo }); }
+
+  /** Catalogo crudo desde el cache compartido (se entrega en 0 ms al re-entrar). */
+  protected readonly habitaciones$ = this.api.habitaciones$;
+
+  /** Lista visible = catalogo filtrado en cliente, de forma reactiva. */
+  protected readonly habitacionesFiltradas$: Observable<Habitacion[]> = combineLatest([
+    this.api.habitaciones$,
+    this.filtros$,
+  ]).pipe(
+    map(([habitaciones, f]) =>
+      habitaciones.filter(
+        (h) => (!f.estado || h.estado === f.estado) && (!f.tipo || h.tipo === f.tipo),
+      ),
+    ),
+  );
+
+  /** Resumen de metricas, derivado del mismo catalogo compartido. */
+  protected readonly resumen$ = this.api.habitaciones$.pipe(
+    map((habitaciones) => ({
+      total: habitaciones.length,
+      disponibles: habitaciones.filter((h) => h.estado === 'DISPONIBLE').length,
+      ocupadas: habitaciones.filter((h) => h.estado === 'OCUPADA').length,
+      mantenimiento: habitaciones.filter((h) => h.estado === 'MANTENIMIENTO').length,
+      fueraServicio: habitaciones.filter((h) => h.estado === 'FUERA_DE_SERVICIO').length,
+    })),
+  );
 
   // Detalle
   protected habitacionSeleccionada: Habitacion | null = null;
@@ -67,7 +103,7 @@ export class Habitaciones implements OnInit, OnDestroy {
     tipo: this.fb.control<TipoHabitacion | null>(null, Validators.required),
     capacidad: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.pattern(/^[0-9]+$/)]),
     piso: this.fb.control<number | null>(null, Validators.required),
-    tamanoM2: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    tamanoM2: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.pattern(/^[0-9]+$/)]),
     precioPorNoche: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
     configuracionCamas: this.fb.nonNullable.control('', Validators.required),
     estado: this.fb.control<EstadoHabitacion | null>(null, Validators.required),
@@ -76,41 +112,28 @@ export class Habitaciones implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    const vistaRuta = this.route.snapshot.data['vista'] as string;
-    this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
-    if (this.vista === 'lista') {
-      this.cargarHabitaciones();
-    }
-  }
-
-  get habitacionesFiltradas(): Habitacion[] {
-    return this.habitaciones.filter(h => {
-      const porEstado = !this.filtroEstado || h.estado === this.filtroEstado;
-      const porTipo = !this.filtroTipo || h.tipo === this.filtroTipo;
-      return porEstado && porTipo;
-    });
-  }
-
-  get totalHabitaciones(): number { return this.habitaciones.length; }
-  get totalDisponibles(): number { return this.habitaciones.filter(h => h.estado === 'DISPONIBLE').length; }
-  get totalOcupadas(): number { return this.habitaciones.filter(h => h.estado === 'OCUPADA').length; }
-  get totalMantenimiento(): number { return this.habitaciones.filter(h => h.estado === 'MANTENIMIENTO').length; }
-  get totalFueraServicio(): number { return this.habitaciones.filter(h => h.estado === 'FUERA_DE_SERVICIO').length; }
-
-  cargarHabitaciones(): void {
-    this.cargando = true;
-    this.errorCarga = '';
-    this.api.consultarHabitaciones()
-      .pipe(takeUntil(this.destruir$))
-      .subscribe({
-        next: (data) => { this.habitaciones = data; this.cargando = false; },
-        error: () => { this.errorCarga = 'Error al cargar las habitaciones.'; this.cargando = false; }
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        const vistaRuta = data['vista'] as string;
+        this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
+        if (this.vista === 'lista') {
+          this.cargarHabitaciones();
+        }
       });
   }
 
-  ngOnDestroy(): void {
-    this.destruir$.next();
-    this.destruir$.complete();
+  cargarHabitaciones(): void {
+    // Solo mostramos spinner si el cache aun esta vacio: si ya hay datos
+    // cacheados, la lista se ve al instante y la recarga ocurre en segundo plano.
+    this.cargando = this.api.habitacionesActuales.length === 0;
+    this.errorCarga = '';
+    this.api.refrescarHabitaciones()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => { this.cargando = false; },
+        error: () => { this.errorCarga = 'Error al cargar las habitaciones.'; this.cargando = false; }
+      });
   }
 
   irAFormulario(): void {
@@ -119,7 +142,6 @@ export class Habitaciones implements OnInit, OnDestroy {
   }
 
   irALista(): void {
-    this.destruir$.next();
     this.vista = 'lista';
     this.cargarHabitaciones();
   }
@@ -188,7 +210,8 @@ export class Habitaciones implements OnInit, OnDestroy {
         this.enviando = false;
         this.mensajeExito = `Habitacion #${creada.numero} registrada correctamente.`;
         this.reiniciar();
-        setTimeout(() => { this.irALista(); }, 2000);
+        this.timeoutVolver = setTimeout(() => { this.irALista(); }, 2000);
+        this.destroyRef.onDestroy(() => { if (this.timeoutVolver) clearTimeout(this.timeoutVolver); });
       },
       error: (e: ApiError) => {
         this.enviando = false;

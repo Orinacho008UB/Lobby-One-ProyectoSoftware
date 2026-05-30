@@ -8,21 +8,23 @@
       <button type="button" (click)="irAFormulario()">+ Nueva oferta</button>
     </div>
 
-    <!-- KPIs -->
-    <div class="metricas">
-      <div class="metrica">
-        <span class="metrica-numero">{{ totalOfertas }}</span>
-        <span class="metrica-label">Total</span>
+    <!-- KPIs (derivados del cache compartido) -->
+    @if (resumen$ | async; as resumen) {
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-numero">{{ resumen.total }}</span>
+          <span class="metrica-label">Total</span>
+        </div>
+        <div class="metrica metrica-verde">
+          <span class="metrica-numero">{{ resumen.activas }}</span>
+          <span class="metrica-label">Activas</span>
+        </div>
+        <div class="metrica metrica-ambar">
+          <span class="metrica-numero">{{ resumen.caducadas }}</span>
+          <span class="metrica-label">Caducadas</span>
+        </div>
       </div>
-      <div class="metrica metrica-verde">
-        <span class="metrica-numero">{{ totalActivas }}</span>
-        <span class="metrica-label">Activas</span>
-      </div>
-      <div class="metrica metrica-ambar">
-        <span class="metrica-numero">{{ totalCaducadas }}</span>
-        <span class="metrica-label">Caducadas</span>
-      </div>
-    </div>
+    }
 
     <!-- Búsqueda y filtros -->
     <div class="filtros">
@@ -46,11 +48,11 @@
       <p class="cargando">Cargando ofertas...</p>
     } @else if (errorCarga) {
       <p class="error-general">{{ errorCarga }}</p>
-    } @else if (ofertasFiltradas.length === 0) {
+    } @else if (((ofertasFiltradas$ | async) ?? []).length === 0) {
       <p class="aviso">No hay ofertas que coincidan con los filtros.</p>
     } @else {
       <div class="grid-ofertas">
-        @for (o of ofertasFiltradas; track o.id) {
+        @for (o of (ofertasFiltradas$ | async) ?? []; track o.id) {
           <div class="card-oferta">
             @if (o.imagenPortada) {
               <img class="card-imagen"

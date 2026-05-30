@@ -1,4 +1,5 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnDestroy, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -39,6 +40,7 @@ export class Reservas implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
   private readonly sesion = inject(SessionManager);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected paso = 1;
 
@@ -117,6 +119,22 @@ export class Reservas implements OnInit, OnDestroy {
   protected perfilIdAdmin: string | null = null;
 
   ngOnInit(): void {
+    // Mirrors del cache compartido (atados al ciclo de vida del componente, no a
+    // destruir$, que se reinicia al navegar entre vistas). Esto rellena al
+    // instante los arreglos que usan los getters de resolucion de IDs, de modo
+    // que las listas no quedan vacias al volver de otra ruta.
+    this.api.reservas$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((reservas) => {
+      this.reservas = reservas;
+      const perfilId = this.sesion.usuario()?.id;
+      if (perfilId) {
+        this.misReservas = reservas.filter((r) => r.perfilId === perfilId);
+      }
+    });
+    this.api.perfiles$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((p) => { this.perfiles = p; });
+    this.api.habitaciones$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((h) => { this.habitaciones = h; });
+    this.api.servicios$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((s) => { this.todosLosServicios = s; });
+    this.api.ofertas$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((o) => { this.todasLasOfertas = o; });
+
     const vistaRuta = this.route.snapshot.data['vista'] as string;
     if (vistaRuta === 'lista') {
       this.vista = 'lista';
@@ -331,64 +349,38 @@ export class Reservas implements OnInit, OnDestroy {
   // ==================== LISTADO ADMIN ====================
 
   cargarReservas(): void {
-    this.cargandoReservas = true;
+    // Spinner solo si el cache de reservas aun esta vacio. Los datos de apoyo
+    // (perfiles, habitaciones, servicios, ofertas) se refrescan en paralelo y
+    // llegan a los arreglos locales via los mirrors definidos en ngOnInit.
+    this.cargandoReservas = this.api.reservasActuales.length === 0;
     this.errorCarga = '';
-    this.api.consultarReservas().subscribe({
-      next: (reservas) => {
-        this.reservas = reservas;
-        this.api.consultarTodosPerfiles().subscribe({
-          next: (perfiles) => {
-            this.perfiles = perfiles;
-            this.api.consultarTodasHabitaciones().subscribe({
-              next: (habitaciones) => {
-                this.habitaciones = habitaciones;
-                this.api.consultarTodosServicios().subscribe({
-                  next: (servicios) => {
-                    this.todosLosServicios = servicios;
-                    this.api.consultarTodasOfertas().subscribe({
-                      next: (ofertas) => { this.todasLasOfertas = ofertas; this.cargandoReservas = false; },
-                      error: () => { this.cargandoReservas = false; },
-                    });
-                  },
-                  error: () => { this.cargandoReservas = false; },
-                });
-              },
-              error: () => { this.cargandoReservas = false; },
-            });
-          },
-          error: () => { this.cargandoReservas = false; },
-        });
-      },
+    this.api.refrescarReservas().subscribe({
+      next: () => { this.cargandoReservas = false; },
       error: () => { this.errorCarga = 'Error al cargar las reservas.'; this.cargandoReservas = false; },
     });
+    this.api.refrescarPerfiles().subscribe({ next: () => {}, error: () => {} });
+    this.api.refrescarHabitaciones().subscribe({ next: () => {}, error: () => {} });
+    this.api.refrescarServicios().subscribe({ next: () => {}, error: () => {} });
+    this.api.refrescarOfertas().subscribe({ next: () => {}, error: () => {} });
   }
 
   cargarMisReservas(): void {
     const perfilId = this.sesion.usuario()?.id;
     if (!perfilId) return;
-    this.cargandoMisReservas = true;
+    // El mirror de reservas$ ya filtra misReservas por perfilId; aqui solo
+    // disparamos las recargas. Spinner solo si el cache esta vacio.
+    this.cargandoMisReservas = this.api.reservasActuales.length === 0;
     this.errorMisReservas = '';
-    this.api.consultarReservas().subscribe({
-      next: (todas) => {
-        this.misReservas = todas.filter(r => r.perfilId === perfilId);
-        this.api.consultarTodosServicios().subscribe({
-          next: (s) => { this.todosLosServicios = s; },
-          error: () => {},
-        });
-        this.api.consultarTodasOfertas().subscribe({
-          next: (o) => { this.todasLasOfertas = o; },
-          error: () => {},
-        });
-        this.api.consultarTodasHabitaciones().subscribe({
-          next: (h) => { this.habitaciones = h; this.cargandoMisReservas = false; },
-          error: () => { this.cargandoMisReservas = false; },
-        });
-      },
+    this.api.refrescarReservas().subscribe({
+      next: () => { this.cargandoMisReservas = false; },
       error: () => {
         this.errorMisReservas = 'No se pudieron cargar tus reservas.';
         this.cargandoMisReservas = false;
       },
     });
+    this.api.refrescarHabitaciones().subscribe({ next: () => {}, error: () => {} });
+    this.api.refrescarServicios().subscribe({ next: () => {}, error: () => {} });
+    this.api.refrescarOfertas().subscribe({ next: () => {}, error: () => {} });
   }
 
   get misReservasFiltradas(): Reserva[] {
@@ -425,15 +417,13 @@ export class Reservas implements OnInit, OnDestroy {
   verDetalleReserva(r: Reserva): void {
     this.reservaSeleccionada = r;
     this.vista = 'detalle';
-    if (this.todosLosServicios.length === 0) {
-      this.api.consultarTodosServicios().subscribe({
-        next: (s) => { this.todosLosServicios = s; }, error: () => {},
-      });
+    // Si el cache esta vacio (deep-link directo), lo rellenamos; los mirrors
+    // de ngOnInit propagan el resultado a los arreglos locales.
+    if (this.api.serviciosActuales.length === 0) {
+      this.api.refrescarServicios().subscribe({ next: () => {}, error: () => {} });
     }
-    if (this.todasLasOfertas.length === 0) {
-      this.api.consultarTodasOfertas().subscribe({
-        next: (o) => { this.todasLasOfertas = o; }, error: () => {},
-      });
+    if (this.api.ofertasActuales.length === 0) {
+      this.api.refrescarOfertas().subscribe({ next: () => {}, error: () => {} });
     }
   }
 
@@ -539,15 +529,11 @@ export class Reservas implements OnInit, OnDestroy {
 
   verDetalleCliente(r: Reserva): void {
     this.reservaDetalleCliente = r;
-    if (this.todosLosServicios.length === 0) {
-      this.api.consultarTodosServicios().subscribe({
-        next: (s) => { this.todosLosServicios = s; }, error: () => {},
-      });
+    if (this.api.serviciosActuales.length === 0) {
+      this.api.refrescarServicios().subscribe({ next: () => {}, error: () => {} });
     }
-    if (this.todasLasOfertas.length === 0) {
-      this.api.consultarTodasOfertas().subscribe({
-        next: (o) => { this.todasLasOfertas = o; }, error: () => {},
-      });
+    if (this.api.ofertasActuales.length === 0) {
+      this.api.refrescarOfertas().subscribe({ next: () => {}, error: () => {} });
     }
     this.vista = 'detalleCliente';
   }

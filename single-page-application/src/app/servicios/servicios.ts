@@ -1,6 +1,8 @@
-import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 import {
   ApiClient,
@@ -38,14 +40,47 @@ export class Servicios implements OnInit {
 
   // --- Navegación de vistas ---
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   protected vista: 'lista' | 'formulario' | 'detalle' = 'lista';
 
-  // --- Listado ---
-  protected servicios: Servicio[] = [];
+  // --- Listado (reactivo): la fuente de verdad vive en el ApiClient) ---
   protected cargando = false;
   protected errorCarga = '';
-  protected filtroEstado = '';
-  protected filtroCategoria = '';
+
+  // Filtros como stream para recomponer la lista filtrada de forma reactiva.
+  private readonly filtros$ = new BehaviorSubject<{ estado: string; categoria: string }>({
+    estado: '',
+    categoria: '',
+  });
+
+  get filtroEstado(): string { return this.filtros$.value.estado; }
+  set filtroEstado(estado: string) { this.filtros$.next({ ...this.filtros$.value, estado }); }
+  get filtroCategoria(): string { return this.filtros$.value.categoria; }
+  set filtroCategoria(categoria: string) { this.filtros$.next({ ...this.filtros$.value, categoria }); }
+
+  /** Catalogo crudo desde el cache compartido (0 ms al re-entrar). */
+  protected readonly servicios$ = this.api.servicios$;
+
+  /** Lista visible = catalogo filtrado en cliente, reactivo. */
+  protected readonly serviciosFiltrados$: Observable<Servicio[]> = combineLatest([
+    this.api.servicios$,
+    this.filtros$,
+  ]).pipe(
+    map(([servicios, f]) =>
+      servicios.filter(
+        (s) => (!f.estado || s.estado === f.estado) && (!f.categoria || s.categoria === f.categoria),
+      ),
+    ),
+  );
+
+  /** Resumen (KPIs) derivado del mismo catalogo. */
+  protected readonly resumen$ = this.api.servicios$.pipe(
+    map((servicios) => ({
+      total: servicios.length,
+      activos: servicios.filter((s) => s.estado === 'ACTIVO').length,
+      inactivos: servicios.filter((s) => s.estado === 'INACTIVO').length,
+    })),
+  );
 
   // --- Detalle ---
   protected servicioSeleccionado: Servicio | null = null;
@@ -79,32 +114,28 @@ export class Servicios implements OnInit {
   });
 
   ngOnInit(): void {
-    const vistaRuta = this.route.snapshot.data['vista'] as string;
-    this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
-    if (this.vista === 'lista') {
-      this.cargarServicios();
-    }
+    this.route.data
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        const vistaRuta = data['vista'] as string;
+        this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
+        if (this.vista === 'lista') {
+          this.cargarServicios();
+        }
+      });
   }
-
-  get serviciosFiltrados(): Servicio[] {
-    return this.servicios.filter(s => {
-      const porEstado = !this.filtroEstado || s.estado === this.filtroEstado;
-      const porCategoria = !this.filtroCategoria || s.categoria === this.filtroCategoria;
-      return porEstado && porCategoria;
-    });
-  }
-
-  get totalServicios(): number { return this.servicios.length; }
-  get totalActivos(): number { return this.servicios.filter(s => s.estado === 'ACTIVO').length; }
-  get totalInactivos(): number { return this.servicios.filter(s => s.estado === 'INACTIVO').length; }
 
   cargarServicios(): void {
-    this.cargando = true;
+    // Spinner solo si el cache aun esta vacio; si ya hay datos, la lista se ve
+    // al instante y la recarga ocurre en segundo plano.
+    this.cargando = this.api.serviciosActuales.length === 0;
     this.errorCarga = '';
-    this.api.consultarTodosServicios().subscribe({
-      next: (data) => { this.servicios = data; this.cargando = false; },
-      error: () => { this.errorCarga = 'Error al cargar los servicios.'; this.cargando = false; },
-    });
+    this.api.refrescarServicios()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => { this.cargando = false; },
+        error: () => { this.errorCarga = 'Error al cargar los servicios.'; this.cargando = false; },
+      });
   }
 
   irAFormulario(): void {
@@ -127,8 +158,8 @@ export class Servicios implements OnInit {
     const nuevoEstado: EstadoServicio = s.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
     this.api.cambiarEstadoServicio(s.id, nuevoEstado).subscribe({
       next: (actualizado) => {
-        const idx = this.servicios.findIndex(x => x.id === actualizado.id);
-        if (idx !== -1) { this.servicios[idx] = actualizado; }
+        // Actualiza el cache compartido: la lista (async) se refresca sola.
+        this.api.actualizarServicioEnCache(actualizado);
         if (this.servicioSeleccionado?.id === actualizado.id) {
           this.servicioSeleccionado = actualizado;
         }

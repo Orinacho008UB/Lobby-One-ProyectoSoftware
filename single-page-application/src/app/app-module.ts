@@ -1,4 +1,4 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -14,7 +14,7 @@ import { Perfiles } from './perfiles/perfiles';
 @NgModule({
   declarations: [App, Reservas, Habitaciones, Servicios, Ofertas, Perfiles],
   imports: [BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, AppRouterModule],
-  providers: [provideBrowserGlobalErrorListeners()],
+  providers: [provideZoneChangeDetection(), provideBrowserGlobalErrorListeners()],
   bootstrap: [App],
 })
 export class AppModule {}

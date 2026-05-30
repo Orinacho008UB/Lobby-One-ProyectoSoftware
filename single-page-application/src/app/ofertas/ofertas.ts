@@ -1,6 +1,8 @@
-import { Component, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 
 import {
   ApiClient,
@@ -28,6 +30,7 @@ export class Ofertas implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly tipos: TipoHabitacion[] = ['INDIVIDUAL', 'DOBLE', 'SUITE'];
   protected readonly estados: EstadoOferta[] = ['ACTIVA', 'INACTIVA'];
@@ -69,20 +72,69 @@ export class Ofertas implements OnInit {
   // --- Navegación entre vistas ---
   protected readonly vista = signal<Vista>('formulario');
 
-  // --- Listado ---
-  protected ofertas: Oferta[] = [];
-  protected todosLosServicios: Servicio[] = [];
+  // --- Listado (reactivo): la fuente de verdad vive en el ApiClient ---
   protected cargando = false;
   protected errorCarga = '';
-  protected filtroBusqueda = '';
-  protected filtroEstado = '';
-  protected filtroTipo = '';
+
+  /** Catalogo de servicios (mirror del cache) para resolver nombres/precios en el detalle. */
+  protected todosLosServicios: Servicio[] = [];
+
+  // Filtros como stream para recomponer la lista filtrada de forma reactiva.
+  private readonly filtros$ = new BehaviorSubject<{ busqueda: string; estado: string; tipo: string }>({
+    busqueda: '',
+    estado: '',
+    tipo: '',
+  });
+
+  get filtroBusqueda(): string { return this.filtros$.value.busqueda; }
+  set filtroBusqueda(busqueda: string) { this.filtros$.next({ ...this.filtros$.value, busqueda }); }
+  get filtroEstado(): string { return this.filtros$.value.estado; }
+  set filtroEstado(estado: string) { this.filtros$.next({ ...this.filtros$.value, estado }); }
+  get filtroTipo(): string { return this.filtros$.value.tipo; }
+  set filtroTipo(tipo: string) { this.filtros$.next({ ...this.filtros$.value, tipo }); }
+
+  /** Lista visible = catalogo de ofertas filtrado en cliente, reactivo. */
+  protected readonly ofertasFiltradas$: Observable<Oferta[]> = combineLatest([
+    this.api.ofertas$,
+    this.filtros$,
+  ]).pipe(
+    map(([ofertas, f]) =>
+      ofertas.filter((o) => {
+        const busqueda = f.busqueda.toLowerCase();
+        const coincide =
+          !busqueda ||
+          o.nombre?.toLowerCase().includes(busqueda) ||
+          o.descripcion?.toLowerCase().includes(busqueda);
+        const porTipo = !f.tipo || o.tipoHabitacion === f.tipo;
+        let porEstado = true;
+        if (f.estado === 'ACTIVA') porEstado = o.estado === 'ACTIVA' && !this.esCaducada(o);
+        else if (f.estado === 'INACTIVA') porEstado = o.estado === 'INACTIVA';
+        else if (f.estado === 'CADUCADA') porEstado = this.esCaducada(o);
+        return coincide && porTipo && porEstado;
+      }),
+    ),
+  );
+
+  /** Resumen (KPIs) derivado del mismo catalogo. */
+  protected readonly resumen$ = this.api.ofertas$.pipe(
+    map((ofertas) => ({
+      total: ofertas.length,
+      activas: ofertas.filter((o) => o.estado === 'ACTIVA' && !this.esCaducada(o)).length,
+      caducadas: ofertas.filter((o) => this.esCaducada(o)).length,
+    })),
+  );
 
   // --- Detalle ---
   protected ofertaSeleccionada: Oferta | null = null;
   protected cambiandoEstado = false;
 
   ngOnInit(): void {
+    // Mirror del cache de servicios: alimenta nombreServicio()/precioServicio()
+    // del detalle y se reemite al instante al volver a la vista.
+    this.api.servicios$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((servicios) => { this.todosLosServicios = servicios; });
+
     this.route.data.subscribe((data) => {
       const vistaRuta = data['vista'] as Vista | undefined;
       if (vistaRuta === 'lista') {
@@ -109,47 +161,20 @@ export class Ofertas implements OnInit {
   // ---- LISTADO ----
 
   cargarListado(): void {
-    this.cargando = true;
+    // Spinner solo si el cache aun esta vacio; con datos cacheados se ve al instante.
+    this.cargando = this.api.ofertasActuales.length === 0;
     this.errorCarga = '';
-    this.api.consultarTodasOfertas().subscribe({
-      next: (ofertas) => {
-        this.ofertas = ofertas;
-        this.api.consultarTodosServicios().subscribe({
-          next: (servicios) => {
-            this.todosLosServicios = servicios;
-            this.cargando = false;
-          },
-          error: () => { this.todosLosServicios = []; this.cargando = false; },
-        });
-      },
-      error: () => { this.errorCarga = 'Error al cargar las ofertas.'; this.cargando = false; },
-    });
+    this.api.refrescarOfertas()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => { this.cargando = false; },
+        error: () => { this.errorCarga = 'Error al cargar las ofertas.'; this.cargando = false; },
+      });
+    // Refresca en segundo plano el catalogo de servicios (para nombres del detalle).
+    this.api.refrescarServicios()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: () => {}, error: () => {} });
   }
-
-  get ofertasFiltradas(): Oferta[] {
-    return this.ofertas.filter(o => {
-      const busqueda = this.filtroBusqueda.toLowerCase();
-      const coincide = !busqueda ||
-        o.nombre?.toLowerCase().includes(busqueda) ||
-        o.descripcion?.toLowerCase().includes(busqueda);
-      const porTipo = !this.filtroTipo || o.tipoHabitacion === this.filtroTipo;
-      let porEstado = true;
-      if (this.filtroEstado === 'ACTIVA') {
-        porEstado = o.estado === 'ACTIVA' && !this.esCaducada(o);
-      } else if (this.filtroEstado === 'INACTIVA') {
-        porEstado = o.estado === 'INACTIVA';
-      } else if (this.filtroEstado === 'CADUCADA') {
-        porEstado = this.esCaducada(o);
-      }
-      return coincide && porTipo && porEstado;
-    });
-  }
-
-  get totalOfertas(): number { return this.ofertas.length; }
-  get totalActivas(): number {
-    return this.ofertas.filter(o => o.estado === 'ACTIVA' && !this.esCaducada(o)).length;
-  }
-  get totalCaducadas(): number { return this.ofertas.filter(o => this.esCaducada(o)).length; }
 
   // ---- ESTADO Y BADGE ----
 
@@ -177,8 +202,8 @@ export class Ofertas implements OnInit {
     this.api.cambiarEstadoOferta(oferta.id, nuevoEstado).subscribe({
       next: (actualizada) => {
         this.cambiandoEstado = false;
-        const idx = this.ofertas.findIndex(o => o.id === actualizada.id);
-        if (idx !== -1) { this.ofertas[idx] = actualizada; }
+        // Actualiza el cache compartido: la lista (async) se refresca sola.
+        this.api.actualizarOfertaEnCache(actualizada);
         if (this.ofertaSeleccionada?.id === actualizada.id) {
           this.ofertaSeleccionada = actualizada;
         }
@@ -210,11 +235,9 @@ export class Ofertas implements OnInit {
 
   verDetalle(oferta: Oferta): void {
     this.ofertaSeleccionada = oferta;
-    if (this.todosLosServicios.length === 0) {
-      this.api.consultarTodosServicios().subscribe({
-        next: (s) => { this.todosLosServicios = s; },
-        error: () => {},
-      });
+    if (this.api.serviciosActuales.length === 0) {
+      // Llena el cache de servicios si aun no hay (p.ej. deep-link directo al detalle).
+      this.api.refrescarServicios().subscribe({ next: () => {}, error: () => {} });
     }
     this.vista.set('detalle');
   }

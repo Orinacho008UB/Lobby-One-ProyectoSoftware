@@ -26,4 +26,46 @@
   "imagenPortada" : "4d8d104e-0ae3-4310-a179-fc0fa11d4db4.jpg",
   "imagenesAdicionales" : null,
   "amenidades" : [ "wifi", "jacuzzi", "minibar" ]
+}, {
+  "id" : "99127f37-ee42-46c2-9206-c7712a314a74",
+  "numero" : 67,
+  "piso" : 6,
+  "tipo" : "INDIVIDUAL",
+  "descripcion" : "amenidades buenas y bonitas",
+  "configuracionCamas" : "1 cama individual",
+  "capacidad" : 1,
+  "tamanoM2" : 67.0,
+  "precioPorNoche" : 677,
+  "estado" : "DISPONIBLE",
+  "imagenPortada" : "8c169767-edbf-466e-98d7-5912daaf9747.jpg",
+  "imagenesAdicionales" : null,
+  "amenidades" : [ "wifi7" ]
+}, {
+  "id" : "8e551413-82d4-46a0-a590-11c84fdf05e1",
+  "numero" : 20,
+  "piso" : 2,
+  "tipo" : "DOBLE",
+  "descripcion" : "bella",
+  "configuracionCamas" : "2 camas individuales",
+  "capacidad" : 2,
+  "tamanoM2" : 55.0,
+  "precioPorNoche" : 200,
+  "estado" : "DISPONIBLE",
+  "imagenPortada" : "bfc57db1-287e-4347-8f66-89541d87584d.jpg",
+  "imagenesAdicionales" : null,
+  "amenidades" : [ "balcon" ]
+}, {
+  "id" : "394f7787-939f-491f-8716-e79d0e6663d3",
+  "numero" : 84,
+  "piso" : 7,
+  "tipo" : "DOBLE",
+  "descripcion" : "grande",
+  "configuracionCamas" : "3 camas king",
+  "capacidad" : 6,
+  "tamanoM2" : 120.0,
+  "precioPorNoche" : 800,
+  "estado" : "DISPONIBLE",
+  "imagenPortada" : "8abfa87d-9292-46b4-b936-ad2a76307214.png",
+  "imagenesAdicionales" : null,
+  "amenidades" : [ "wifi", "doble piso" ]
 } ]

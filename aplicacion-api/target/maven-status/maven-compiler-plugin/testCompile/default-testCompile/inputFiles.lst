@@ -1,11 +1,11 @@
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\AplicacionApiApplicationTests.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\ControllersIntegracionTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\dataaccesscomponent\DataAccessComponentTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\habitaciones\HabitacionesServiceTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\imagestoragecomponent\ImageStorageComponentTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\notificationcomponent\NotificationComponentTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\ofertas\OfertasServiceTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\perfiles\PerfilesServiceTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\reservas\ReservasServiceTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\securitycomponent\SecurityComponentTest.java
-C:\Users\andre\UCAB\Ingenieria de software\Proyectos\lobby-one-proyecto-software\Lobby-One-ProyectoSoftware\aplicacion-api\src\test\java\com\lobbyone\servicios\ServiciosServiceTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/AplicacionApiApplicationTests.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/ControllersIntegracionTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/dataaccesscomponent/DataAccessComponentTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/habitaciones/HabitacionesServiceTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/imagestoragecomponent/ImageStorageComponentTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/notificationcomponent/NotificationComponentTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/ofertas/OfertasServiceTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/perfiles/PerfilesServiceTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/reservas/ReservasServiceTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/securitycomponent/SecurityComponentTest.java
+/Users/enr.g/Documents/UCAB/Lobby-One-ProyectoSoftware/aplicacion-api/src/test/java/com/lobbyone/servicios/ServiciosServiceTest.java

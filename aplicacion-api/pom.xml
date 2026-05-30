@@ -19,7 +19,7 @@
     <description>Lobby One - Aplicacion API (backend de gestion hotelera)</description>
 
     <properties>
-        <!-- El proyecto se compila a bytecode Java 17 (ver CLAUDE.md). -->
+        <!-- El proyecto se compila a bytecode Java 17 . -->
         <java.version>17</java.version>
         <!-- Bouncy Castle: requerido por Argon2 de Spring Security Crypto. -->
         <bouncycastle.version>1.79</bouncycastle.version>

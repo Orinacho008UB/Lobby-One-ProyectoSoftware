@@ -2,7 +2,7 @@
   @if (mensajeExito) {
     <p class="exito">{{ mensajeExito }}</p>
   }
-  @if (mensajeError) {
+  @if (mensajeError && vista() !== 'login') {
     <p class="error-general">{{ mensajeError }}</p>
   }
 
@@ -71,6 +71,10 @@
   @if (vista() === 'login') {
     <h1>Iniciar sesion</h1>
     <form [formGroup]="loginForm" (ngSubmit)="iniciarSesion()" novalidate>
+      @if (mensajeError) {
+        <p class="error-general">{{ mensajeError }}</p>
+      }
+
       <label>
         Email
         <input type="email" formControlName="email" autocomplete="email" />

@@ -26,29 +26,31 @@
       </select>
     </div>
 
-    <!-- Metricas de resumen -->
-    <div class="metricas">
-      <div class="metrica">
-        <span class="metrica-numero">{{ totalHabitaciones }}</span>
-        <span class="metrica-label">Total</span>
+    <!-- Metricas de resumen (derivadas del cache compartido) -->
+    @if (resumen$ | async; as resumen) {
+      <div class="metricas">
+        <div class="metrica">
+          <span class="metrica-numero">{{ resumen.total }}</span>
+          <span class="metrica-label">Total</span>
+        </div>
+        <div class="metrica metrica-verde">
+          <span class="metrica-numero">{{ resumen.disponibles }}</span>
+          <span class="metrica-label">Disponibles</span>
+        </div>
+        <div class="metrica metrica-azul">
+          <span class="metrica-numero">{{ resumen.ocupadas }}</span>
+          <span class="metrica-label">Ocupadas</span>
+        </div>
+        <div class="metrica metrica-amarillo">
+          <span class="metrica-numero">{{ resumen.mantenimiento }}</span>
+          <span class="metrica-label">Mantenimiento</span>
+        </div>
+        <div class="metrica metrica-rojo">
+          <span class="metrica-numero">{{ resumen.fueraServicio }}</span>
+          <span class="metrica-label">Fuera de servicio</span>
+        </div>
       </div>
-      <div class="metrica metrica-verde">
-        <span class="metrica-numero">{{ totalDisponibles }}</span>
-        <span class="metrica-label">Disponibles</span>
-      </div>
-      <div class="metrica metrica-azul">
-        <span class="metrica-numero">{{ totalOcupadas }}</span>
-        <span class="metrica-label">Ocupadas</span>
-      </div>
-      <div class="metrica metrica-amarillo">
-        <span class="metrica-numero">{{ totalMantenimiento }}</span>
-        <span class="metrica-label">Mantenimiento</span>
-      </div>
-      <div class="metrica metrica-rojo">
-        <span class="metrica-numero">{{ totalFueraServicio }}</span>
-        <span class="metrica-label">Fuera de servicio</span>
-      </div>
-    </div>
+    }
 
     <!-- Estado de carga -->
     @if (cargando) {
@@ -58,37 +60,43 @@
       <p class="error-general">{{ errorCarga }}</p>
     }
 
-    <!-- Lista de habitaciones -->
-    @if (!cargando && habitacionesFiltradas.length > 0) {
-      <ul class="lista-cards">
-        @for (hab of habitacionesFiltradas; track hab.id) {
-          <li class="card">
-            <div class="card-header">
-              <span class="card-titulo">Hab. {{ hab.numero }} — {{ hab.tipo }}</span>
-              <span class="badge-estado" [ngClass]="badgeClase(hab.estado)">
-                {{ badgeTexto(hab.estado) }}
-              </span>
-            </div>
-            <p class="card-meta">
-              Capacidad: {{ hab.capacidad }} ·
-              Piso {{ hab.piso }} ·
-              ${{ hab.precioPorNoche }}/noche ·
-              {{ hab.tamanoM2 }} m²
-            </p>
-            <div class="acciones">
-              <button class="btn-ver" (click)="verDetalle(hab)">Ver detalles</button>
-            </div>
-          </li>
-        }
-      </ul>
-    }
+    <!-- Lista de habitaciones: el flujo asincrono se resuelve con el pipe async. -->
+    @if ((habitaciones$ | async) ?? []; as todas) {
+      @if ((habitacionesFiltradas$ | async) ?? []; as lista) {
 
-    <!-- Sin resultados -->
-    @if (!cargando && habitacionesFiltradas.length === 0 && habitaciones.length > 0) {
-      <p class="aviso">No hay habitaciones que coincidan con los filtros seleccionados.</p>
-    }
-    @if (!cargando && habitaciones.length === 0 && !errorCarga) {
-      <p class="aviso">No hay habitaciones registradas. Registra la primera usando el boton de arriba.</p>
+        @if (!cargando && lista.length > 0) {
+          <ul class="lista-cards">
+            @for (hab of lista; track hab.id) {
+              <li class="card">
+                <div class="card-header">
+                  <span class="card-titulo">Hab. {{ hab.numero }} — {{ hab.tipo }}</span>
+                  <span class="badge-estado" [ngClass]="badgeClase(hab.estado)">
+                    {{ badgeTexto(hab.estado) }}
+                  </span>
+                </div>
+                <p class="card-meta">
+                  Capacidad: {{ hab.capacidad }} ·
+                  Piso {{ hab.piso }} ·
+                  ${{ hab.precioPorNoche }}/noche ·
+                  {{ hab.tamanoM2 }} m²
+                </p>
+                <div class="acciones">
+                  <button class="btn-ver" (click)="verDetalle(hab)">Ver detalles</button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Sin resultados -->
+        @if (!cargando && lista.length === 0 && todas.length > 0) {
+          <p class="aviso">No hay habitaciones que coincidan con los filtros seleccionados.</p>
+        }
+        @if (!cargando && todas.length === 0 && !errorCarga) {
+          <p class="aviso">No hay habitaciones registradas. Registra la primera usando el boton de arriba.</p>
+        }
+
+      }
     }
 
   }
@@ -248,12 +256,12 @@
 
       <label>
         Tamano (m²)
-        <input type="number" formControlName="tamanoM2" min="0.01" step="0.01" />
+        <input type="number" formControlName="tamanoM2" min="1" step="1" />
       </label>
       @if (erroresBackend['tamanoM2']) {
         <small class="error">{{ erroresBackend['tamanoM2'] }}</small>
       } @else if (form.controls.tamanoM2.invalid && form.controls.tamanoM2.touched) {
-        <small class="error">El tamano debe ser mayor que 0.</small>
+        <small class="error">El tamano debe ser un número entero mayor que 0.</small>
       }
 
       <label>
