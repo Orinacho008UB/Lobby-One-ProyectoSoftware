@@ -100,6 +100,13 @@
     @if (usuario(); as u) {
       <ul class="datos">
         <li><strong>Nombre:</strong> {{ u.nombre }}</li>
+        <li><strong>Email:</strong> {{ perfilCompleto?.email ?? u.email }}</li>
+        @if (perfilCompleto?.telefono) {
+          <li><strong>Teléfono:</strong> {{ perfilCompleto?.telefono }}</li>
+        }
+        @if (perfilCompleto?.cedula) {
+          <li><strong>Cédula:</strong> {{ perfilCompleto?.cedula }}</li>
+        }
         <li><strong>Rol:</strong> {{ u.rol }}</li>
         <li><strong>Id:</strong> {{ u.id }}</li>
       </ul>
@@ -109,4 +116,279 @@
       <p class="alterna"><a routerLink="/login">Iniciar sesion</a></p>
     }
   }
+
+  <!-- ==================== VISTA: LISTADO ADMIN ==================== -->
+  @if (vista() === 'lista') {
+
+    <div class="encabezado-seccion">
+      <h1>Gestión de huéspedes</h1>
+      <button type="button" (click)="irACrearManual()">+ Crear huésped</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-numero">{{ totalHuespedes }}</span>
+        <span class="metrica-label">Total</span>
+      </div>
+      <div class="metrica metrica-verde">
+        <span class="metrica-numero">{{ totalVip }}</span>
+        <span class="metrica-label">VIP</span>
+      </div>
+      <div class="metrica metrica-ambar">
+        <span class="metrica-numero">{{ totalFrecuentes }}</span>
+        <span class="metrica-label">Frecuentes</span>
+      </div>
+    </div>
+
+    <!-- Búsqueda y filtros -->
+    <div class="filtros">
+      <input type="text" [(ngModel)]="filtroBusqueda"
+             placeholder="Nombre, email, teléfono o documento" />
+      <select [(ngModel)]="filtroClasificacion">
+        <option value="">Todos</option>
+        <option value="VIP">VIP</option>
+        <option value="Frecuente">Frecuentes</option>
+        <option value="Regular">Regulares</option>
+        <option value="Nuevo">Nuevos</option>
+      </select>
+    </div>
+
+    @if (cargando) {
+      <p class="cargando">Cargando huéspedes...</p>
+    } @else if (errorCarga) {
+      <p class="error-general">{{ errorCarga }}</p>
+    } @else if (perfilesFiltrados.length === 0) {
+      <p class="aviso">No hay huéspedes que coincidan con la búsqueda.</p>
+    } @else {
+      <ul class="lista-huespedes">
+        @for (p of perfilesFiltrados; track p.id) {
+          <li class="card-huesped">
+            <div class="card-huesped-header">
+              <p class="card-titulo">{{ p.nombre }}</p>
+              <span class="badge-clasif" [ngClass]="badgeClasificacion(p.id)">
+                {{ clasificacion(p.id) }}
+              </span>
+            </div>
+            <p class="card-meta">{{ p.email }} · {{ p.telefono }}</p>
+            @if (p.cedula) {
+              <p class="card-meta">Cédula: {{ p.cedula }}</p>
+            }
+            <p class="card-meta">
+              Reservas: {{ reservasDelPerfil(p.id).length }}
+            </p>
+            <div class="acciones">
+              <button type="button" class="btn-secundario" (click)="verDetalle(p)">
+                Ver perfil
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  <!-- ==================== VISTA: CREAR HUÉSPED MANUAL ==================== -->
+  @if (vista() === 'crearManual') {
+
+    <div class="encabezado-seccion">
+      <h1>Crear huésped manualmente</h1>
+      <button type="button" class="btn-secundario" (click)="irALista()">
+        ← Volver al listado
+      </button>
+    </div>
+
+    @if (!huespedCreado) {
+
+      @if (mensajeError) {
+        <p class="error-general">{{ mensajeError }}</p>
+      }
+
+      <form [formGroup]="crearForm" (ngSubmit)="crearHuesped()" novalidate>
+
+        <label>
+          Nombre completo
+          <input type="text" formControlName="nombre" />
+        </label>
+        @if (erroresBackend['nombre']) {
+          <small class="error">{{ erroresBackend['nombre'] }}</small>
+        } @else if (crearForm.controls.nombre.invalid && crearForm.controls.nombre.touched) {
+          <small class="error">El nombre es obligatorio.</small>
+        }
+
+        <label>
+          Email
+          <input type="email" formControlName="email" />
+        </label>
+        @if (erroresBackend['email']) {
+          <small class="error">{{ erroresBackend['email'] }}</small>
+        } @else if (crearForm.controls.email.invalid && crearForm.controls.email.touched) {
+          <small class="error">Ingresa un email válido.</small>
+        }
+
+        <label>
+          Teléfono
+          <input type="tel" formControlName="telefono" />
+        </label>
+        @if (erroresBackend['telefono']) {
+          <small class="error">{{ erroresBackend['telefono'] }}</small>
+        } @else if (crearForm.controls.telefono.invalid && crearForm.controls.telefono.touched) {
+          <small class="error">El teléfono es obligatorio.</small>
+        }
+
+        <label>
+          Cédula / Documento <span class="label-opcional">(opcional)</span>
+          <input type="text" formControlName="cedula" />
+        </label>
+
+        <button type="submit" [disabled]="enviando">
+          {{ enviando ? 'Creando...' : 'Crear huésped' }}
+        </button>
+
+      </form>
+
+    } @else {
+
+      <!-- Resultado: mostrar contraseña provisional UNA sola vez -->
+      <div class="credenciales-box">
+        <p class="exito">✓ Huésped <strong>{{ huespedCreado.nombre }}</strong> creado correctamente.</p>
+        <p class="credenciales-aviso">
+          ⚠ Esta es la contraseña provisional. Comunícasela al huésped ahora —
+          no se podrá ver nuevamente.
+        </p>
+        <div class="credenciales-datos">
+          <p><strong>Email:</strong> {{ huespedCreado.email }}</p>
+          <p><strong>Contraseña provisional:</strong>
+            <code class="contrasena-provisional">{{ contrasenaProvisional }}</code>
+          </p>
+        </div>
+        <div class="acciones">
+          <button type="button" (click)="irALista()">Volver al listado</button>
+          <button type="button" class="btn-secundario" (click)="irACrearManual()">
+            Crear otro huésped
+          </button>
+        </div>
+      </div>
+
+    }
+  }
+
+  <!-- ==================== VISTA: DETALLE DEL HUÉSPED ==================== -->
+  @if (vista() === 'detalle' && perfilSeleccionado) {
+
+    <div class="detalle-header">
+      <button type="button" class="btn-volver" (click)="irALista()">
+        ← Volver al listado
+      </button>
+      <div class="detalle-titulo">
+        <h1>{{ perfilSeleccionado.nombre }}</h1>
+        <span class="badge-clasif" [ngClass]="badgeClasificacion(perfilSeleccionado.id)">
+          {{ clasificacion(perfilSeleccionado.id) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Bloque 1: Datos personales -->
+    <div class="detalle-seccion">
+      <h2>Información personal</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Email</span>
+          <span class="detalle-valor">{{ perfilSeleccionado.email }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Teléfono</span>
+          <span class="detalle-valor">{{ perfilSeleccionado.telefono }}</span>
+        </div>
+        @if (perfilSeleccionado.cedula) {
+          <div class="detalle-campo">
+            <span class="detalle-label">Cédula / Documento</span>
+            <span class="detalle-valor">{{ perfilSeleccionado.cedula }}</span>
+          </div>
+        }
+        <div class="detalle-campo">
+          <span class="detalle-label">Rol</span>
+          <span class="detalle-valor">{{ perfilSeleccionado.rol }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">ID</span>
+          <span class="detalle-valor detalle-id">{{ perfilSeleccionado.id }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque 2: Historial de reservas -->
+    <div class="detalle-seccion">
+      <h2>Historial de reservas
+        <span class="historial-count">({{ reservasDelPerfil(perfilSeleccionado.id).length }})</span>
+      </h2>
+      @if (reservasDelPerfil(perfilSeleccionado.id).length === 0) {
+        <p class="aviso">Este huésped no tiene reservas registradas.</p>
+      } @else {
+        <table class="tabla-historial">
+          <thead>
+            <tr>
+              <th>ID Reserva</th>
+              <th>Entrada</th>
+              <th>Salida</th>
+              <th>Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of reservasDelPerfil(perfilSeleccionado.id); track r.id) {
+              <tr>
+                <td class="reserva-id-celda">{{ r.id.slice(0, 8) }}...</td>
+                <td>{{ r.fechaEntrada }}</td>
+                <td>{{ r.fechaSalida }}</td>
+                <td class="reserva-monto-celda">${{ r.montoTotal }}</td>
+                <td>
+                  <span class="badge-estado-reserva" [ngClass]="'badge-' + r.estado.toLowerCase()">
+                    {{ r.estado }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <!-- Bloque 3: Notas internas del staff -->
+    <div class="detalle-seccion">
+      <div class="notas-header">
+        <h2>Notas internas del staff</h2>
+        @if (!notasEditando) {
+          <button type="button" class="btn-link" (click)="activarEdicionNotas()">
+            Editar notas
+          </button>
+        }
+      </div>
+      @if (mensajeError) {
+        <p class="error-general">{{ mensajeError }}</p>
+      }
+      @if (notasEditando) {
+        <textarea class="notas-textarea" [(ngModel)]="notasTexto"
+                  placeholder="Ej: Cliente VIP. Prefiere pisos altos."
+                  rows="4"></textarea>
+        <div class="acciones">
+          <button type="button" (click)="guardarNotas()" [disabled]="guardandoNotas">
+            {{ guardandoNotas ? 'Guardando...' : 'Guardar notas' }}
+          </button>
+          <button type="button" class="btn-secundario"
+                  (click)="notasEditando = false">
+            Cancelar
+          </button>
+        </div>
+      } @else {
+        @if (perfilSeleccionado.notasInternas) {
+          <p class="notas-texto">{{ perfilSeleccionado.notasInternas }}</p>
+        } @else {
+          <p class="aviso">Sin notas internas registradas.</p>
+        }
+      }
+    </div>
+
+  }
+
 </section>

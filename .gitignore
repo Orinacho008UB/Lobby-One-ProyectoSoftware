@@ -13,3 +13,5 @@ aplicacion-api/mvnw.cmd
 .vscode/
 .idea/
 *.log
+
+desarrollo/

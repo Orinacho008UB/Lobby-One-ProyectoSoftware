@@ -18,18 +18,29 @@ const routes: Routes = [
 
   // Cliente (requiere sesion).
   { path: 'perfil', component: Perfiles, canActivate: [authGuard], data: { vista: 'perfil' } },
-  { path: 'reservar', component: Reservas, canActivate: [authGuard] },
+  { path: 'reservar', component: Reservas, canActivate: [authGuard], data: { vista: 'misReservas' } },
 
   // Administrador (requiere sesion + rol admin).
-  { path: 'admin/habitaciones/nueva', component: Habitaciones, canActivate: [adminGuard] },
-  { path: 'admin/servicios/nuevo', component: Servicios, canActivate: [adminGuard] },
-  { path: 'admin/ofertas/nueva', component: Ofertas, canActivate: [adminGuard] },
+  { path: 'admin/habitaciones', component: Habitaciones, canActivate: [adminGuard], data: { vista: 'lista' } },
+  { path: 'admin/habitaciones/nueva', component: Habitaciones, canActivate: [adminGuard], data: { vista: 'formulario' } },
+  { path: 'admin/servicios', component: Servicios, canActivate: [adminGuard], data: { vista: 'lista' } },
+  { path: 'admin/servicios/nuevo', component: Servicios, canActivate: [adminGuard], data: { vista: 'formulario' } },
+  { path: 'admin/perfiles', component: Perfiles, canActivate: [adminGuard], data: { vista: 'lista' } },
+  { path: 'admin/perfiles/nuevo', component: Perfiles, canActivate: [adminGuard], data: { vista: 'crearManual' } },
+  { path: 'admin/ofertas', component: Ofertas, canActivate: [adminGuard], data: { vista: 'lista' } },
+  { path: 'admin/ofertas/nueva', component: Ofertas, canActivate: [adminGuard], data: { vista: 'formulario' } },
+  { path: 'admin/reservas', component: Reservas, canActivate: [adminGuard], data: { vista: 'lista' } },
+  { path: 'admin/reservas/nueva', component: Reservas, canActivate: [adminGuard], data: { vista: 'crearAdmin' } },
 
   // Raiz: a /reservar si hay sesion, si no a /login (se evalua en contexto de inyeccion).
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: () => (inject(SessionManager).estaAutenticado() ? '/reservar' : '/login'),
+    redirectTo: () => {
+      const sesion = inject(SessionManager);
+      if (!sesion.estaAutenticado()) return '/login';
+      return sesion.esAdministrador() ? '/admin/reservas' : '/reservar';
+    },
   },
 
   // Comodin: cualquier ruta desconocida va a /login.

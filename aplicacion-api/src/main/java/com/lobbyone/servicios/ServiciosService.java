@@ -100,6 +100,28 @@ public class ServiciosService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Devuelve todos los servicios sin filtrar por estado.
+     * Solo para uso del administrador.
+     */
+    public List<Servicio> consultarTodos() {
+        return repository.buscarTodos();
+    }
+
+    /**
+     * Cambia el estado de un servicio (ACTIVO <-> INACTIVO).
+     *
+     * @throws ValidacionException si el id no corresponde a ningún servicio
+     *                             o si el estado proporcionado no es válido.
+     */
+    public Servicio cambiarEstado(String id, Servicio.EstadoServicio nuevoEstado) {
+        Servicio servicio = repository.buscarPorId(id)
+                .orElseThrow(() -> new ValidacionException(
+                        Map.of("id", "No se encontro un servicio con ese id.")));
+        servicio.setEstado(nuevoEstado);
+        return repository.guardar(servicio);
+    }
+
     private boolean tieneAlMenosUnHorarioValido(List<Horario> horarios) {
         if (horarios == null || horarios.isEmpty()) {
             return false;

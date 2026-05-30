@@ -57,6 +57,11 @@ public class OfertasService {
             errores.put("nombre", "Ya existe una oferta con ese nombre.");
         }
 
+        // La descripcion es obligatoria segun el ERS (Historia 5).
+        if (esVacio(oferta.getDescripcion())) {
+            errores.put("descripcion", "La descripcion es obligatoria.");
+        }
+
         BigDecimal precio = oferta.getPrecio();
         if (precio == null || precio.compareTo(BigDecimal.ZERO) <= 0) {
             errores.put("precio", "El precio debe ser mayor que 0.");
@@ -149,6 +154,27 @@ public class OfertasService {
         } else if (desde != null && !hasta.isAfter(desde)) {
             errores.put("vigenciaHasta", "La fecha de fin debe ser posterior a la de inicio.");
         }
+    }
+
+    /**
+     * Devuelve todas las ofertas sin filtrar por estado.
+     * Solo para el administrador.
+     */
+    public List<Oferta> consultarTodas() {
+        return repository.buscarTodas();
+    }
+
+    /**
+     * Cambia el estado de una oferta (ACTIVA <-> INACTIVA).
+     *
+     * @throws ValidacionException si no existe una oferta con ese id.
+     */
+    public Oferta cambiarEstado(String id, Oferta.EstadoOferta nuevoEstado) {
+        Oferta oferta = repository.buscarPorId(id)
+                .orElseThrow(() -> new ValidacionException(
+                        Map.of("id", "No se encontro una oferta con ese id.")));
+        oferta.setEstado(nuevoEstado);
+        return repository.guardar(oferta);
     }
 
     /**

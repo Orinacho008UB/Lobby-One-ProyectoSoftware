@@ -6,7 +6,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,6 +53,33 @@ public class OfertasController {
     @GetMapping
     public List<Oferta> consultarActivas() {
         return service.consultarActivas();
+    }
+
+    /**
+     * GET /ofertas/todos — devuelve todas las ofertas (sin filtro de estado).
+     * Solo para el administrador.
+     */
+    @GetMapping("/todos")
+    public List<Oferta> consultarTodas() {
+        return service.consultarTodas();
+    }
+
+    /**
+     * PATCH /ofertas/{id}/estado — conmuta el estado de una oferta.
+     * Cuerpo JSON: { "estado": "ACTIVA" } o { "estado": "INACTIVA" }
+     */
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Oferta> cambiarEstado(
+            @PathVariable String id,
+            @RequestBody Map<String, String> cuerpo) {
+        Oferta.EstadoOferta nuevoEstado;
+        try {
+            nuevoEstado = Oferta.EstadoOferta.valueOf(cuerpo.get("estado"));
+        } catch (Exception e) {
+            throw new ValidacionException(
+                    Map.of("estado", "Estado no valido. Use ACTIVA o INACTIVA."));
+        }
+        return ResponseEntity.ok(service.cambiarEstado(id, nuevoEstado));
     }
 
     @ExceptionHandler(ValidacionException.class)

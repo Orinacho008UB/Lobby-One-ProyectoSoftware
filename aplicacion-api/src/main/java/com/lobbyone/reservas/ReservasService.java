@@ -62,6 +62,11 @@ public class ReservasService {
         this.notificationComponent = notificationComponent;
     }
 
+    /** Devuelve todas las reservas registradas en el sistema. */
+    public List<Reserva> consultarTodas() {
+        return repository.buscarTodas();
+    }
+
     /**
      * Busca las habitaciones disponibles para un rango de fechas, opcionalmente
      * filtrando por tipo y capacidad. Si se aplica una oferta, su tipo de

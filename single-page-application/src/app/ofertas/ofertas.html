@@ -1,137 +1,355 @@
 <section class="ofertas">
-  <h1>Crear oferta</h1>
 
-  @if (mensajeExito) {
-    <p class="exito">{{ mensajeExito }}</p>
-  }
-  @if (mensajeError) {
-    <p class="error-general">{{ mensajeError }}</p>
-  }
+  <!-- ==================== VISTA: LISTADO ==================== -->
+  @if (vista() === 'lista') {
 
-  <form [formGroup]="form" (ngSubmit)="crear()" novalidate>
+    <div class="encabezado-seccion">
+      <h1>Catálogo de ofertas</h1>
+      <button type="button" (click)="irAFormulario()">+ Nueva oferta</button>
+    </div>
 
-    <label>
-      Nombre
-      <input type="text" formControlName="nombre" />
-    </label>
-    @if (erroresBackend['nombre']) {
-      <small class="error">{{ erroresBackend['nombre'] }}</small>
-    } @else if (form.controls.nombre.invalid && form.controls.nombre.touched) {
-      <small class="error">El nombre es obligatorio.</small>
-    }
+    <!-- KPIs -->
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-numero">{{ totalOfertas }}</span>
+        <span class="metrica-label">Total</span>
+      </div>
+      <div class="metrica metrica-verde">
+        <span class="metrica-numero">{{ totalActivas }}</span>
+        <span class="metrica-label">Activas</span>
+      </div>
+      <div class="metrica metrica-ambar">
+        <span class="metrica-numero">{{ totalCaducadas }}</span>
+        <span class="metrica-label">Caducadas</span>
+      </div>
+    </div>
 
-    <label>
-      Descripcion
-      <textarea formControlName="descripcion" rows="3"></textarea>
-    </label>
-    @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
-      <small class="error">La descripcion es obligatoria.</small>
-    }
-
-    <label>
-      Tipo de habitacion
-      <select formControlName="tipoHabitacion">
-        <option [ngValue]="null" disabled>Selecciona un tipo</option>
+    <!-- Búsqueda y filtros -->
+    <div class="filtros">
+      <input type="text" [(ngModel)]="filtroBusqueda"
+             placeholder="Buscar por nombre o descripción" />
+      <select [(ngModel)]="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVA">Activas</option>
+        <option value="INACTIVA">Inactivas</option>
+        <option value="CADUCADA">Caducadas</option>
+      </select>
+      <select [(ngModel)]="filtroTipo">
+        <option value="">Todos los tipos</option>
         @for (t of tipos; track t) {
-          <option [ngValue]="t">{{ t }}</option>
+          <option [value]="t">{{ t }}</option>
         }
       </select>
-    </label>
-    @if (erroresBackend['tipoHabitacion']) {
-      <small class="error">{{ erroresBackend['tipoHabitacion'] }}</small>
-    } @else if (form.controls.tipoHabitacion.invalid && form.controls.tipoHabitacion.touched) {
-      <small class="error">El tipo de habitacion es obligatorio.</small>
-    }
+    </div>
 
-    <!-- Seleccion de servicios incluidos -->
-    <fieldset class="servicios-panel">
-      <legend>Servicios incluidos (al menos uno)</legend>
-
-      @if (cargandoServicios) {
-        <p class="cargando">Cargando servicios activos...</p>
-      } @else if (serviciosActivos.length === 0) {
-        <p class="aviso">No hay servicios activos disponibles en el catalogo.</p>
-      } @else {
-        <ul class="servicios-lista">
-          @for (s of serviciosActivos; track s.id) {
-            <li>
-              <label class="servicio-item">
-                <input
-                  type="checkbox"
-                  [checked]="estaSeleccionado(s.id)"
-                  (change)="toggleServicio(s.id)"
-                />
-                <span>
-                  <strong>{{ s.nombre }}</strong>
-                  <span class="servicio-meta">{{ s.categoria }} · ${{ s.precio }}</span>
+    @if (cargando) {
+      <p class="cargando">Cargando ofertas...</p>
+    } @else if (errorCarga) {
+      <p class="error-general">{{ errorCarga }}</p>
+    } @else if (ofertasFiltradas.length === 0) {
+      <p class="aviso">No hay ofertas que coincidan con los filtros.</p>
+    } @else {
+      <div class="grid-ofertas">
+        @for (o of ofertasFiltradas; track o.id) {
+          <div class="card-oferta">
+            @if (o.imagenPortada) {
+              <img class="card-imagen"
+                   [src]="'http://localhost:8080/images/' + o.imagenPortada"
+                   [alt]="o.nombre" />
+            } @else {
+              <div class="card-imagen-placeholder">Sin imagen</div>
+            }
+            <div class="card-cuerpo">
+              <div class="card-header">
+                <p class="card-titulo">{{ o.nombre }}</p>
+                <span class="badge-estado" [ngClass]="badgeClaseEstado(o)">
+                  {{ badgeTextoEstado(o) }}
                 </span>
-              </label>
-            </li>
-          }
-        </ul>
-      }
-
-      @if (errorServicios) {
-        <small class="error">{{ errorServicios }}</small>
-      }
-    </fieldset>
-
-    <label>
-      Precio fijo (por noche)
-      <input type="number" formControlName="precio" min="0.01" step="0.01" />
-    </label>
-    @if (erroresBackend['precio']) {
-      <small class="error">{{ erroresBackend['precio'] }}</small>
-    } @else if (form.controls.precio.invalid && form.controls.precio.touched) {
-      <small class="error">El precio debe ser mayor que 0.</small>
-    }
-
-    <label>
-      Vigencia desde
-      <input type="date" formControlName="vigenciaDesde" [min]="hoy" />
-    </label>
-    @if (erroresBackend['vigenciaDesde']) {
-      <small class="error">{{ erroresBackend['vigenciaDesde'] }}</small>
-    } @else if (form.controls.vigenciaDesde.invalid && form.controls.vigenciaDesde.touched) {
-      <small class="error">La fecha de inicio de vigencia es obligatoria.</small>
-    }
-
-    <label>
-      Vigencia hasta
-      <input type="date" formControlName="vigenciaHasta" [min]="manana" />
-    </label>
-    @if (erroresBackend['vigenciaHasta']) {
-      <small class="error">{{ erroresBackend['vigenciaHasta'] }}</small>
-    } @else if (form.controls.vigenciaHasta.invalid && form.controls.vigenciaHasta.touched) {
-      <small class="error">La fecha de fin de vigencia es obligatoria.</small>
-    }
-
-    <label>
-      Estado
-      <select formControlName="estado">
-        <option [ngValue]="null" disabled>Selecciona un estado</option>
-        @for (e of estados; track e) {
-          <option [ngValue]="e">{{ e }}</option>
+              </div>
+              <p class="card-descripcion">{{ o.descripcion }}</p>
+              <p class="card-meta">
+                <strong>Tipo:</strong> {{ o.tipoHabitacion }}
+              </p>
+              <div class="card-servicios">
+                @for (id of o.serviciosIncluidos; track id) {
+                  <span class="pill-servicio">{{ nombreServicio(id) }}</span>
+                }
+              </div>
+              <p class="card-vigencia">
+                {{ o.vigenciaDesde }} → {{ o.vigenciaHasta }}
+              </p>
+              <p class="card-precio">${{ o.precio }}</p>
+              <div class="acciones">
+                <button type="button" class="btn-secundario" (click)="verDetalle(o)">
+                  Ver detalles
+                </button>
+                <button type="button"
+                        [class]="o.estado === 'ACTIVA' ? 'btn-desactivar' : 'btn-activar'"
+                        [disabled]="cambiandoEstado"
+                        (click)="toggleEstado(o)">
+                  {{ o.estado === 'ACTIVA' ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </div>
+          </div>
         }
-      </select>
-    </label>
-    @if (erroresBackend['estado']) {
-      <small class="error">{{ erroresBackend['estado'] }}</small>
-    } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
-      <small class="error">El estado es obligatorio.</small>
+      </div>
     }
 
-    <label>
-      Imagen de portada
-      <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
-    </label>
-    @if (errorImagen) {
-      <small class="error">{{ errorImagen }}</small>
+  }
+
+  <!-- ==================== VISTA: FORMULARIO ==================== -->
+  @if (vista() === 'formulario') {
+
+    <div class="encabezado-seccion">
+      <h1>Crear oferta</h1>
+      <button type="button" class="btn-secundario" (click)="irAListado()">
+        ← Volver al catálogo
+      </button>
+    </div>
+
+    @if (mensajeExito) {
+      <p class="exito">{{ mensajeExito }}</p>
+    }
+    @if (mensajeError) {
+      <p class="error-general">{{ mensajeError }}</p>
     }
 
-    <button type="submit" [disabled]="enviando">
-      {{ enviando ? 'Creando...' : 'Crear oferta' }}
-    </button>
+    <form [formGroup]="form" (ngSubmit)="crear()" novalidate>
 
-  </form>
+      <label>
+        Nombre
+        <input type="text" formControlName="nombre" />
+      </label>
+      @if (erroresBackend['nombre']) {
+        <small class="error">{{ erroresBackend['nombre'] }}</small>
+      } @else if (form.controls.nombre.invalid && form.controls.nombre.touched) {
+        <small class="error">El nombre es obligatorio.</small>
+      }
+
+      <label>
+        Descripcion
+        <textarea formControlName="descripcion" rows="3"></textarea>
+      </label>
+      @if (form.controls.descripcion.invalid && form.controls.descripcion.touched) {
+        <small class="error">La descripcion es obligatoria.</small>
+      }
+
+      <label>
+        Tipo de habitacion
+        <select formControlName="tipoHabitacion">
+          <option [ngValue]="null" disabled>Selecciona un tipo</option>
+          @for (t of tipos; track t) {
+            <option [ngValue]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      @if (erroresBackend['tipoHabitacion']) {
+        <small class="error">{{ erroresBackend['tipoHabitacion'] }}</small>
+      } @else if (form.controls.tipoHabitacion.invalid && form.controls.tipoHabitacion.touched) {
+        <small class="error">El tipo de habitacion es obligatorio.</small>
+      }
+
+      <!-- Seleccion de servicios incluidos -->
+      <fieldset class="servicios-panel">
+        <legend>Servicios incluidos (al menos uno)</legend>
+
+        @if (cargandoServicios) {
+          <p class="cargando">Cargando servicios activos...</p>
+        } @else if (serviciosActivos.length === 0) {
+          <p class="aviso">No hay servicios activos disponibles en el catalogo.</p>
+        } @else {
+          <ul class="servicios-lista">
+            @for (s of serviciosActivos; track s.id) {
+              <li>
+                <label class="servicio-item">
+                  <input
+                    type="checkbox"
+                    [checked]="estaSeleccionado(s.id)"
+                    (change)="toggleServicio(s.id)"
+                  />
+                  <span>
+                    <strong>{{ s.nombre }}</strong>
+                    <span class="servicio-meta">{{ s.categoria }} · ${{ s.precio }}</span>
+                  </span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (errorServicios) {
+          <small class="error">{{ errorServicios }}</small>
+        }
+      </fieldset>
+
+      <label>
+        Precio fijo (por noche)
+        <input type="number" formControlName="precio" min="0.01" step="0.01" />
+      </label>
+      @if (erroresBackend['precio']) {
+        <small class="error">{{ erroresBackend['precio'] }}</small>
+      } @else if (form.controls.precio.invalid && form.controls.precio.touched) {
+        <small class="error">El precio debe ser mayor que 0.</small>
+      }
+
+      <label>
+        Vigencia desde
+        <input type="date" formControlName="vigenciaDesde" [min]="hoy" />
+      </label>
+      @if (erroresBackend['vigenciaDesde']) {
+        <small class="error">{{ erroresBackend['vigenciaDesde'] }}</small>
+      } @else if (form.controls.vigenciaDesde.invalid && form.controls.vigenciaDesde.touched) {
+        <small class="error">La fecha de inicio de vigencia es obligatoria.</small>
+      }
+
+      <label>
+        Vigencia hasta
+        <input type="date" formControlName="vigenciaHasta" [min]="manana" />
+      </label>
+      @if (erroresBackend['vigenciaHasta']) {
+        <small class="error">{{ erroresBackend['vigenciaHasta'] }}</small>
+      } @else if (form.controls.vigenciaHasta.invalid && form.controls.vigenciaHasta.touched) {
+        <small class="error">La fecha de fin de vigencia es obligatoria.</small>
+      }
+
+      <label>
+        Estado
+        <select formControlName="estado">
+          <option [ngValue]="null" disabled>Selecciona un estado</option>
+          @for (e of estados; track e) {
+            <option [ngValue]="e">{{ e }}</option>
+          }
+        </select>
+      </label>
+      @if (erroresBackend['estado']) {
+        <small class="error">{{ erroresBackend['estado'] }}</small>
+      } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
+        <small class="error">El estado es obligatorio.</small>
+      }
+
+      <label>
+        Imagen de portada
+        <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
+      </label>
+      @if (errorImagen) {
+        <small class="error">{{ errorImagen }}</small>
+      }
+
+      <button type="submit" [disabled]="enviando">
+        {{ enviando ? 'Creando...' : 'Crear oferta' }}
+      </button>
+
+    </form>
+
+  }
+
+  <!-- ==================== VISTA: DETALLE ==================== -->
+  @if (vista() === 'detalle' && ofertaSeleccionada) {
+
+    <div class="detalle-header">
+      <button type="button" class="btn-volver" (click)="irAListado()">
+        ← Volver al catálogo
+      </button>
+      <div class="detalle-titulo">
+        <span class="detalle-id">ID: {{ ofertaSeleccionada.id }}</span>
+        <h1>{{ ofertaSeleccionada.nombre }}</h1>
+        <span class="badge-estado" [ngClass]="badgeClaseEstado(ofertaSeleccionada)">
+          {{ badgeTextoEstado(ofertaSeleccionada) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Layout 2 bloques -->
+    <div class="detalle-layout">
+
+      <!-- Bloque izquierdo: imagen, descripción, precio -->
+      <div class="detalle-bloque-visual">
+        @if (ofertaSeleccionada.imagenPortada) {
+          <img class="detalle-imagen"
+               [src]="'http://localhost:8080/images/' + ofertaSeleccionada.imagenPortada"
+               [alt]="ofertaSeleccionada.nombre" />
+        }
+        <p class="detalle-descripcion">{{ ofertaSeleccionada.descripcion }}</p>
+        <div class="detalle-precio">
+          <span class="precio-label">Precio fijo (por noche)</span>
+          <span class="precio-valor">${{ ofertaSeleccionada.precio }}</span>
+        </div>
+      </div>
+
+      <!-- Bloque derecho: configuración, servicios, vigencia -->
+      <div class="detalle-bloque-config">
+
+        <!-- Tipo de habitación -->
+        <div class="config-caja">
+          <span class="config-label">Tipo de habitación</span>
+          <span class="config-valor">{{ ofertaSeleccionada.tipoHabitacion }}</span>
+        </div>
+
+        <!-- Servicios incluidos -->
+        <div class="config-caja">
+          <span class="config-label">Servicios incluidos</span>
+          <ul class="servicios-detalle-lista">
+            @for (id of ofertaSeleccionada.serviciosIncluidos; track id) {
+              <li class="servicio-detalle-item">
+                <span>{{ nombreServicio(id) }}</span>
+                @if (precioServicio(id) !== null) {
+                  <span class="servicio-precio-ref">
+                    ${{ precioServicio(id) }} (precio individual)
+                  </span>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Barra de vigencia -->
+        <div class="config-caja">
+          <span class="config-label">Vigencia</span>
+          <p class="vigencia-rango">
+            {{ ofertaSeleccionada.vigenciaDesde }} → {{ ofertaSeleccionada.vigenciaHasta }}
+          </p>
+          <div class="vigencia-barra-contenedor">
+            <div class="vigencia-barra-progreso"
+                 [style.width.%]="porcentajeVigencia(ofertaSeleccionada)">
+            </div>
+          </div>
+          @if (diasRestantes(ofertaSeleccionada) > 0) {
+            <p class="vigencia-dias">{{ diasRestantes(ofertaSeleccionada) }} días restantes</p>
+          } @else {
+            <p class="vigencia-dias vigencia-expirada">Vigencia expirada</p>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Cuadro informativo del staff -->
+    <div class="info-staff">
+      <p class="info-staff-titulo">Cómo funciona esta oferta en el sistema</p>
+      <p>
+        <strong>Reserva normal:</strong> el cliente busca por fechas y filtros;
+        el sistema calcula la tarifa regular de la habitación.
+      </p>
+      <p>
+        <strong>Reserva por oferta:</strong> si el cliente selecciona este paquete,
+        el sistema bloquea automáticamente el tipo de habitación
+        (<strong>{{ ofertaSeleccionada.tipoHabitacion }}</strong>) y los servicios incluidos,
+        solicitando únicamente las fechas de estadía.
+        Se aplica el precio fijo de <strong>${{ ofertaSeleccionada.precio }}</strong> por noche.
+      </p>
+    </div>
+
+    <!-- Botonera operativa -->
+    <div class="acciones detalle-acciones">
+      <button type="button"
+              [class]="ofertaSeleccionada.estado === 'ACTIVA' ? 'btn-desactivar' : 'btn-activar'"
+              [disabled]="cambiandoEstado"
+              (click)="toggleEstado(ofertaSeleccionada)">
+        {{ ofertaSeleccionada.estado === 'ACTIVA' ? 'Desactivar oferta' : 'Activar oferta' }}
+      </button>
+    </div>
+
+  }
+
 </section>

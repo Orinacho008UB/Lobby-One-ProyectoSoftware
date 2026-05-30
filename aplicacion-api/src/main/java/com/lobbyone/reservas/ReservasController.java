@@ -33,6 +33,12 @@ public class ReservasController {
         this.service = service;
     }
 
+    /** GET /reservas — devuelve todas las reservas del sistema (uso admin). */
+    @GetMapping
+    public ResponseEntity<List<Reserva>> consultarTodas() {
+        return ResponseEntity.ok(service.consultarTodas());
+    }
+
     /**
      * GET /reservas/disponibilidad — habitaciones disponibles para el rango de
      * fechas, con filtros opcionales de tipo, capacidad y oferta.

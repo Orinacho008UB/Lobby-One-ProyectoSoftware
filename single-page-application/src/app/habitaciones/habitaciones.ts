@@ -1,10 +1,14 @@
-import { Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import {
   ApiClient,
   ApiError,
   EstadoHabitacion,
+  Habitacion,
   NuevaHabitacion,
   TipoHabitacion,
 } from '../api-client/api-client';
@@ -19,9 +23,11 @@ import {
   templateUrl: './habitaciones.html',
   styleUrl: './habitaciones.css',
 })
-export class Habitaciones {
+export class Habitaciones implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destruir$ = new Subject<void>();
 
   protected readonly tipos: TipoHabitacion[] = ['INDIVIDUAL', 'DOBLE', 'SUITE'];
   protected readonly estados: EstadoHabitacion[] = [
@@ -31,6 +37,20 @@ export class Habitaciones {
     'OCUPADA',
   ];
 
+  // Vista activa
+  protected vista: 'lista' | 'formulario' | 'detalle' = 'lista';
+
+  // Listado
+  protected habitaciones: Habitacion[] = [];
+  protected cargando = false;
+  protected errorCarga = '';
+  protected filtroEstado = '';
+  protected filtroTipo = '';
+
+  // Detalle
+  protected habitacionSeleccionada: Habitacion | null = null;
+
+  // Formulario
   protected erroresBackend: Record<string, string> = {};
   protected errorImagen = '';
   protected mensajeError = '';
@@ -45,7 +65,7 @@ export class Habitaciones {
   protected readonly form = this.fb.group({
     numero: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
     tipo: this.fb.control<TipoHabitacion | null>(null, Validators.required),
-    capacidad: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
+    capacidad: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.pattern(/^[0-9]+$/)]),
     piso: this.fb.control<number | null>(null, Validators.required),
     tamanoM2: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
     precioPorNoche: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
@@ -54,6 +74,80 @@ export class Habitaciones {
     amenidades: this.fb.nonNullable.control(''),
     descripcion: this.fb.nonNullable.control(''),
   });
+
+  ngOnInit(): void {
+    const vistaRuta = this.route.snapshot.data['vista'] as string;
+    this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
+    if (this.vista === 'lista') {
+      this.cargarHabitaciones();
+    }
+  }
+
+  get habitacionesFiltradas(): Habitacion[] {
+    return this.habitaciones.filter(h => {
+      const porEstado = !this.filtroEstado || h.estado === this.filtroEstado;
+      const porTipo = !this.filtroTipo || h.tipo === this.filtroTipo;
+      return porEstado && porTipo;
+    });
+  }
+
+  get totalHabitaciones(): number { return this.habitaciones.length; }
+  get totalDisponibles(): number { return this.habitaciones.filter(h => h.estado === 'DISPONIBLE').length; }
+  get totalOcupadas(): number { return this.habitaciones.filter(h => h.estado === 'OCUPADA').length; }
+  get totalMantenimiento(): number { return this.habitaciones.filter(h => h.estado === 'MANTENIMIENTO').length; }
+  get totalFueraServicio(): number { return this.habitaciones.filter(h => h.estado === 'FUERA_DE_SERVICIO').length; }
+
+  cargarHabitaciones(): void {
+    this.cargando = true;
+    this.errorCarga = '';
+    this.api.consultarHabitaciones()
+      .pipe(takeUntil(this.destruir$))
+      .subscribe({
+        next: (data) => { this.habitaciones = data; this.cargando = false; },
+        error: () => { this.errorCarga = 'Error al cargar las habitaciones.'; this.cargando = false; }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destruir$.next();
+    this.destruir$.complete();
+  }
+
+  irAFormulario(): void {
+    this.vista = 'formulario';
+    this.limpiarMensajes();
+  }
+
+  irALista(): void {
+    this.destruir$.next();
+    this.vista = 'lista';
+    this.cargarHabitaciones();
+  }
+
+  verDetalle(hab: Habitacion): void {
+    this.habitacionSeleccionada = hab;
+    this.vista = 'detalle';
+  }
+
+  badgeClase(estado: string): string {
+    const clases: Record<string, string> = {
+      'DISPONIBLE': 'badge-disponible',
+      'OCUPADA': 'badge-ocupada',
+      'MANTENIMIENTO': 'badge-mantenimiento',
+      'FUERA_DE_SERVICIO': 'badge-fuera-servicio'
+    };
+    return clases[estado] || '';
+  }
+
+  badgeTexto(estado: string): string {
+    const textos: Record<string, string> = {
+      'DISPONIBLE': '✓ Disponible',
+      'OCUPADA': 'Ocupada',
+      'MANTENIMIENTO': 'Mantenimiento',
+      'FUERA_DE_SERVICIO': 'Fuera de servicio'
+    };
+    return textos[estado] || estado;
+  }
 
   onArchivo(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -94,6 +188,7 @@ export class Habitaciones {
         this.enviando = false;
         this.mensajeExito = `Habitacion #${creada.numero} registrada correctamente.`;
         this.reiniciar();
+        setTimeout(() => { this.irALista(); }, 2000);
       },
       error: (e: ApiError) => {
         this.enviando = false;

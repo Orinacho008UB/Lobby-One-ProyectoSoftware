@@ -20,6 +20,7 @@ export interface Perfil {
   /** El backend nunca lo expone en las respuestas (llega null). */
   contrasenaHash?: string | null;
   rol: Rol;
+  notasInternas?: string;
 }
 
 /**
@@ -94,6 +95,7 @@ export interface Oferta {
   imagenPortada?: string;
 }
 
+// Estados definidos en el backend (Reserva.EstadoReserva). En Sprint 1 solo se usa ACTIVA.
 export type EstadoReserva = 'ACTIVA' | 'MODIFICADA' | 'CANCELADA';
 
 export interface Reserva {
@@ -152,6 +154,30 @@ export interface CrearReservaPayload extends CotizarPayload {
   emailContacto: string;
 }
 
+/** Body para crear un huesped manualmente. */
+export interface CrearHuespedManual {
+  nombre: string;
+  email: string;
+  telefono: string;
+  cedula?: string;
+}
+
+/** Respuesta de la creacion manual: perfil + contrasena provisional (solo una vez). */
+export interface HuespedCreadoResponse {
+  perfil: Perfil;
+  contrasenaProvisional: string;
+}
+
+/** Perfil devuelto por la busqueda de huesped (sin contrasena). */
+export interface PerfilPublico {
+  id: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  cedula: string;
+  rol: Rol;
+}
+
 /**
  * Error normalizado que el API Client propaga a los componentes. {@code errores}
  * mapea campo -> mensaje (lo que el backend devuelve en 400) para mostrarlo
@@ -191,12 +217,49 @@ export class ApiClient {
       .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
   }
 
+  buscarPerfilPorEmail(email: string): Observable<PerfilPublico> {
+    const params = new HttpParams().set('email', email);
+    return this.http
+      .get<PerfilPublico>(`${this.baseUrl}/perfiles/buscar`, { params })
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  consultarTodosPerfiles(): Observable<Perfil[]> {
+    return this.http
+      .get<Perfil[]>(`${this.baseUrl}/perfiles/todos`)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  obtenerPerfilPorId(id: string): Observable<Perfil> {
+    return this.http
+      .get<Perfil>(`${this.baseUrl}/perfiles/${id}`)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  crearHuespedManual(datos: CrearHuespedManual): Observable<HuespedCreadoResponse> {
+    return this.http
+      .post<HuespedCreadoResponse>(`${this.baseUrl}/perfiles/manual`, datos)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  actualizarNotasInternas(id: string, notasInternas: string): Observable<Perfil> {
+    return this.http
+      .patch<Perfil>(`${this.baseUrl}/perfiles/${id}/notas`, { notasInternas })
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
   // --- Habitaciones ---
 
   crearHabitacion(habitacion: NuevaHabitacion, imagen: File): Observable<Habitacion> {
     const cuerpo = this.construirMultipart('habitacion', habitacion, imagen);
     return this.http
       .post<Habitacion>(`${this.baseUrl}/habitaciones`, cuerpo)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  consultarTodasHabitaciones(): Observable<Habitacion[]> {
+    return this.http
+      .get<Habitacion[]>(`${this.baseUrl}/habitaciones`)
       .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
   }
 
@@ -231,6 +294,18 @@ export class ApiClient {
       .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
   }
 
+  consultarTodosServicios(): Observable<Servicio[]> {
+    return this.http
+      .get<Servicio[]>(`${this.baseUrl}/servicios/todos`)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  cambiarEstadoServicio(id: string, estado: EstadoServicio): Observable<Servicio> {
+    return this.http
+      .patch<Servicio>(`${this.baseUrl}/servicios/${id}/estado`, { estado })
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
   // --- Ofertas ---
 
   crearOferta(oferta: NuevaOferta, imagen: File): Observable<Oferta> {
@@ -243,6 +318,18 @@ export class ApiClient {
   consultarOfertasActivas(): Observable<Oferta[]> {
     return this.http
       .get<Oferta[]>(`${this.baseUrl}/ofertas`)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  consultarTodasOfertas(): Observable<Oferta[]> {
+    return this.http
+      .get<Oferta[]>(`${this.baseUrl}/ofertas/todos`)
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  cambiarEstadoOferta(id: string, estado: EstadoOferta): Observable<Oferta> {
+    return this.http
+      .patch<Oferta>(`${this.baseUrl}/ofertas/${id}/estado`, { estado })
       .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
   }
 
@@ -269,6 +356,12 @@ export class ApiClient {
     }
     return this.http
       .get<Habitacion[]>(`${this.baseUrl}/reservas/disponibilidad`, { params })
+      .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
+  }
+
+  consultarReservas(): Observable<Reserva[]> {
+    return this.http
+      .get<Reserva[]>(`${this.baseUrl}/reservas`)
       .pipe(catchError((e: HttpErrorResponse) => this.manejarError(e)));
   }
 

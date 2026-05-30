@@ -1,126 +1,321 @@
 <section class="habitaciones">
-  <h1>Registrar habitacion</h1>
 
-  @if (mensajeExito) {
-    <p class="exito">{{ mensajeExito }}</p>
-  }
-  @if (mensajeError) {
-    <p class="error-general">{{ mensajeError }}</p>
-  }
+  <!-- ==================== VISTA: LISTADO ==================== -->
+  @if (vista === 'lista') {
 
-  <form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
-    <label>
-      Numero
-      <input type="number" formControlName="numero" min="1" />
-    </label>
-    @if (erroresBackend['numero']) {
-      <small class="error">{{ erroresBackend['numero'] }}</small>
-    } @else if (form.controls.numero.invalid && form.controls.numero.touched) {
-      <small class="error">El numero es obligatorio y debe ser mayor que 0.</small>
-    }
+    <!-- Encabezado -->
+    <div class="encabezado-seccion">
+      <h1>Gestion de habitaciones</h1>
+      <button (click)="irAFormulario()">+ Nueva habitacion</button>
+    </div>
 
-    <label>
-      Tipo
-      <select formControlName="tipo">
-        <option [ngValue]="null" disabled>Selecciona un tipo</option>
-        @for (t of tipos; track t) {
-          <option [ngValue]="t">{{ t }}</option>
-        }
+    <!-- Filtros -->
+    <div class="filtros">
+      <select [(ngModel)]="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="DISPONIBLE">Disponible</option>
+        <option value="OCUPADA">Ocupada</option>
+        <option value="MANTENIMIENTO">Mantenimiento</option>
+        <option value="FUERA_DE_SERVICIO">Fuera de servicio</option>
       </select>
-    </label>
-    @if (erroresBackend['tipo']) {
-      <small class="error">{{ erroresBackend['tipo'] }}</small>
-    } @else if (form.controls.tipo.invalid && form.controls.tipo.touched) {
-      <small class="error">El tipo es obligatorio.</small>
-    }
-
-    <label>
-      Capacidad
-      <input type="number" formControlName="capacidad" min="1" />
-    </label>
-    @if (erroresBackend['capacidad']) {
-      <small class="error">{{ erroresBackend['capacidad'] }}</small>
-    } @else if (form.controls.capacidad.invalid && form.controls.capacidad.touched) {
-      <small class="error">La capacidad debe ser mayor que 0.</small>
-    }
-
-    <label>
-      Piso
-      <input type="number" formControlName="piso" />
-    </label>
-    @if (erroresBackend['piso']) {
-      <small class="error">{{ erroresBackend['piso'] }}</small>
-    } @else if (form.controls.piso.invalid && form.controls.piso.touched) {
-      <small class="error">El piso es obligatorio.</small>
-    }
-
-    <label>
-      Tamano (m²)
-      <input type="number" formControlName="tamanoM2" min="0.01" step="0.01" />
-    </label>
-    @if (erroresBackend['tamanoM2']) {
-      <small class="error">{{ erroresBackend['tamanoM2'] }}</small>
-    } @else if (form.controls.tamanoM2.invalid && form.controls.tamanoM2.touched) {
-      <small class="error">El tamano debe ser mayor que 0.</small>
-    }
-
-    <label>
-      Precio por noche
-      <input type="number" formControlName="precioPorNoche" min="0.01" step="0.01" />
-    </label>
-    @if (erroresBackend['precioPorNoche']) {
-      <small class="error">{{ erroresBackend['precioPorNoche'] }}</small>
-    } @else if (form.controls.precioPorNoche.invalid && form.controls.precioPorNoche.touched) {
-      <small class="error">El precio por noche debe ser mayor que 0.</small>
-    }
-
-    <label>
-      Configuracion de camas
-      <input type="text" formControlName="configuracionCamas" placeholder="Ej: 1 cama king" />
-    </label>
-    @if (erroresBackend['configuracionCamas']) {
-      <small class="error">{{ erroresBackend['configuracionCamas'] }}</small>
-    } @else if (form.controls.configuracionCamas.invalid && form.controls.configuracionCamas.touched) {
-      <small class="error">La configuracion de camas es obligatoria.</small>
-    }
-
-    <label>
-      Estado
-      <select formControlName="estado">
-        <option [ngValue]="null" disabled>Selecciona un estado</option>
-        @for (e of estados; track e) {
-          <option [ngValue]="e">{{ e }}</option>
-        }
+      <select [(ngModel)]="filtroTipo">
+        <option value="">Todos los tipos</option>
+        <option value="INDIVIDUAL">Individual</option>
+        <option value="DOBLE">Doble</option>
+        <option value="SUITE">Suite</option>
       </select>
-    </label>
-    @if (erroresBackend['estado']) {
-      <small class="error">{{ erroresBackend['estado'] }}</small>
-    } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
-      <small class="error">El estado es obligatorio.</small>
+    </div>
+
+    <!-- Metricas de resumen -->
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-numero">{{ totalHabitaciones }}</span>
+        <span class="metrica-label">Total</span>
+      </div>
+      <div class="metrica metrica-verde">
+        <span class="metrica-numero">{{ totalDisponibles }}</span>
+        <span class="metrica-label">Disponibles</span>
+      </div>
+      <div class="metrica metrica-azul">
+        <span class="metrica-numero">{{ totalOcupadas }}</span>
+        <span class="metrica-label">Ocupadas</span>
+      </div>
+      <div class="metrica metrica-amarillo">
+        <span class="metrica-numero">{{ totalMantenimiento }}</span>
+        <span class="metrica-label">Mantenimiento</span>
+      </div>
+      <div class="metrica metrica-rojo">
+        <span class="metrica-numero">{{ totalFueraServicio }}</span>
+        <span class="metrica-label">Fuera de servicio</span>
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    @if (cargando) {
+      <p class="cargando">Cargando habitaciones...</p>
+    }
+    @if (errorCarga) {
+      <p class="error-general">{{ errorCarga }}</p>
     }
 
-    <label>
-      Imagen de portada
-      <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
-    </label>
-    @if (errorImagen) {
-      <small class="error">{{ errorImagen }}</small>
+    <!-- Lista de habitaciones -->
+    @if (!cargando && habitacionesFiltradas.length > 0) {
+      <ul class="lista-cards">
+        @for (hab of habitacionesFiltradas; track hab.id) {
+          <li class="card">
+            <div class="card-header">
+              <span class="card-titulo">Hab. {{ hab.numero }} — {{ hab.tipo }}</span>
+              <span class="badge-estado" [ngClass]="badgeClase(hab.estado)">
+                {{ badgeTexto(hab.estado) }}
+              </span>
+            </div>
+            <p class="card-meta">
+              Capacidad: {{ hab.capacidad }} ·
+              Piso {{ hab.piso }} ·
+              ${{ hab.precioPorNoche }}/noche ·
+              {{ hab.tamanoM2 }} m²
+            </p>
+            <div class="acciones">
+              <button class="btn-ver" (click)="verDetalle(hab)">Ver detalles</button>
+            </div>
+          </li>
+        }
+      </ul>
     }
 
-    <fieldset class="opcionales">
-      <legend>Opcionales</legend>
-      <label>
-        Amenidades (separadas por coma)
-        <input type="text" formControlName="amenidades" placeholder="wifi, tv, balcon" />
-      </label>
-      <label>
-        Descripcion
-        <textarea formControlName="descripcion" rows="2"></textarea>
-      </label>
-    </fieldset>
+    <!-- Sin resultados -->
+    @if (!cargando && habitacionesFiltradas.length === 0 && habitaciones.length > 0) {
+      <p class="aviso">No hay habitaciones que coincidan con los filtros seleccionados.</p>
+    }
+    @if (!cargando && habitaciones.length === 0 && !errorCarga) {
+      <p class="aviso">No hay habitaciones registradas. Registra la primera usando el boton de arriba.</p>
+    }
 
-    <button type="submit" [disabled]="enviando">
-      {{ enviando ? 'Registrando...' : 'Registrar habitacion' }}
-    </button>
-  </form>
+  }
+
+  <!-- ==================== VISTA: DETALLE ==================== -->
+  @if (vista === 'detalle' && habitacionSeleccionada) {
+
+    <!-- Barra superior -->
+    <div class="detalle-header">
+      <button class="btn-volver" (click)="irALista()">← Volver al listado</button>
+      <div class="detalle-titulo">
+        <h1>Hab. {{ habitacionSeleccionada.numero }} — {{ habitacionSeleccionada.tipo }}</h1>
+        <span class="badge-estado" [ngClass]="badgeClase(habitacionSeleccionada.estado)">
+          {{ badgeTexto(habitacionSeleccionada.estado) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Imagen de portada -->
+    @if (habitacionSeleccionada.imagenPortada) {
+      <div class="detalle-imagen">
+        <img [src]="'http://localhost:8080/images/' + habitacionSeleccionada.imagenPortada"
+             [alt]="'Habitacion ' + habitacionSeleccionada.numero"
+             class="imagen-portada" />
+      </div>
+    }
+
+    <!-- Informacion general -->
+    <div class="detalle-seccion">
+      <h2>Informacion general</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Numero</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.numero }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Tipo</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.tipo }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Piso</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.piso }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Tamano</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.tamanoM2 }} m²</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Capacidad</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.capacidad }} personas</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Estado</span>
+          <span class="badge-estado" [ngClass]="badgeClase(habitacionSeleccionada.estado)">
+            {{ badgeTexto(habitacionSeleccionada.estado) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuracion de camas y precio -->
+    <div class="detalle-seccion">
+      <h2>Configuracion y precio</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Configuracion de camas</span>
+          <span class="detalle-valor">{{ habitacionSeleccionada.configuracionCamas }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Precio por noche</span>
+          <span class="detalle-valor detalle-precio">${{ habitacionSeleccionada.precioPorNoche }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amenidades -->
+    @if (habitacionSeleccionada.amenidades && habitacionSeleccionada.amenidades.length > 0) {
+      <div class="detalle-seccion">
+        <h2>Amenidades</h2>
+        <div class="amenidades-lista">
+          @for (amenidad of habitacionSeleccionada.amenidades; track amenidad) {
+            <span class="amenidad-chip">{{ amenidad }}</span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Descripcion -->
+    @if (habitacionSeleccionada.descripcion) {
+      <div class="detalle-seccion">
+        <h2>Descripcion</h2>
+        <p class="detalle-descripcion">{{ habitacionSeleccionada.descripcion }}</p>
+      </div>
+    }
+
+  }
+
+  <!-- ==================== VISTA: FORMULARIO ==================== -->
+  @if (vista === 'formulario') {
+
+    <button class="btn-volver" (click)="irALista()">← Volver al listado</button>
+
+    <h1>Registrar habitacion</h1>
+
+    @if (mensajeExito) {
+      <p class="exito">{{ mensajeExito }}</p>
+    }
+    @if (mensajeError) {
+      <p class="error-general">{{ mensajeError }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="registrar()" novalidate>
+      <label>
+        Numero
+        <input type="number" formControlName="numero" min="1" />
+      </label>
+      @if (erroresBackend['numero']) {
+        <small class="error">{{ erroresBackend['numero'] }}</small>
+      } @else if (form.controls.numero.invalid && form.controls.numero.touched) {
+        <small class="error">El numero es obligatorio y debe ser mayor que 0.</small>
+      }
+
+      <label>
+        Tipo
+        <select formControlName="tipo">
+          <option [ngValue]="null" disabled>Selecciona un tipo</option>
+          @for (t of tipos; track t) {
+            <option [ngValue]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      @if (erroresBackend['tipo']) {
+        <small class="error">{{ erroresBackend['tipo'] }}</small>
+      } @else if (form.controls.tipo.invalid && form.controls.tipo.touched) {
+        <small class="error">El tipo es obligatorio.</small>
+      }
+
+      <label>
+        Capacidad
+        <input type="number" formControlName="capacidad" min="1" step="1" />
+      </label>
+      @if (erroresBackend['capacidad']) {
+        <small class="error">{{ erroresBackend['capacidad'] }}</small>
+      } @else if (form.controls.capacidad.invalid && form.controls.capacidad.touched) {
+        <small class="error">La capacidad debe ser un número entero mayor que 0.</small>
+      }
+
+      <label>
+        Piso
+        <input type="number" formControlName="piso" />
+      </label>
+      @if (erroresBackend['piso']) {
+        <small class="error">{{ erroresBackend['piso'] }}</small>
+      } @else if (form.controls.piso.invalid && form.controls.piso.touched) {
+        <small class="error">El piso es obligatorio.</small>
+      }
+
+      <label>
+        Tamano (m²)
+        <input type="number" formControlName="tamanoM2" min="0.01" step="0.01" />
+      </label>
+      @if (erroresBackend['tamanoM2']) {
+        <small class="error">{{ erroresBackend['tamanoM2'] }}</small>
+      } @else if (form.controls.tamanoM2.invalid && form.controls.tamanoM2.touched) {
+        <small class="error">El tamano debe ser mayor que 0.</small>
+      }
+
+      <label>
+        Precio por noche
+        <input type="number" formControlName="precioPorNoche" min="0.01" step="0.01" />
+      </label>
+      @if (erroresBackend['precioPorNoche']) {
+        <small class="error">{{ erroresBackend['precioPorNoche'] }}</small>
+      } @else if (form.controls.precioPorNoche.invalid && form.controls.precioPorNoche.touched) {
+        <small class="error">El precio por noche debe ser mayor que 0.</small>
+      }
+
+      <label>
+        Configuracion de camas
+        <input type="text" formControlName="configuracionCamas" placeholder="Ej: 1 cama king" />
+      </label>
+      @if (erroresBackend['configuracionCamas']) {
+        <small class="error">{{ erroresBackend['configuracionCamas'] }}</small>
+      } @else if (form.controls.configuracionCamas.invalid && form.controls.configuracionCamas.touched) {
+        <small class="error">La configuracion de camas es obligatoria.</small>
+      }
+
+      <label>
+        Estado
+        <select formControlName="estado">
+          <option [ngValue]="null" disabled>Selecciona un estado</option>
+          @for (e of estados; track e) {
+            <option [ngValue]="e">{{ e }}</option>
+          }
+        </select>
+      </label>
+      @if (erroresBackend['estado']) {
+        <small class="error">{{ erroresBackend['estado'] }}</small>
+      } @else if (form.controls.estado.invalid && form.controls.estado.touched) {
+        <small class="error">El estado es obligatorio.</small>
+      }
+
+      <label>
+        Imagen de portada
+        <input #archivoInput type="file" accept="image/*" (change)="onArchivo($event)" />
+      </label>
+      @if (errorImagen) {
+        <small class="error">{{ errorImagen }}</small>
+      }
+
+      <fieldset class="opcionales">
+        <legend>Opcionales</legend>
+        <label>
+          Amenidades (separadas por coma)
+          <input type="text" formControlName="amenidades" placeholder="wifi, tv, balcon" />
+        </label>
+        <label>
+          Descripcion
+          <textarea formControlName="descripcion" rows="2"></textarea>
+        </label>
+      </fieldset>
+
+      <button type="submit" [disabled]="enviando">
+        {{ enviando ? 'Registrando...' : 'Registrar habitacion' }}
+      </button>
+    </form>
+
+  }
+
 </section>

@@ -1,5 +1,6 @@
-import { Component, ElementRef, inject, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import {
   ApiClient,
@@ -7,20 +8,16 @@ import {
   EstadoServicio,
   Horario,
   NuevoServicio,
+  Servicio,
 } from '../api-client/api-client';
 
-/**
- * Componente Servicios (C4): formulario de creacion de servicio (solo admin).
- * Reactive Forms + API Client; sube la imagen de portada por multipart.
- * La lista de horarios es un FormArray dinamico (agregar/quitar filas).
- */
 @Component({
   selector: 'app-servicios',
   standalone: false,
   templateUrl: './servicios.html',
   styleUrl: './servicios.css',
 })
-export class Servicios {
+export class Servicios implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiClient);
 
@@ -38,6 +35,29 @@ export class Servicios {
   private imagen: File | null = null;
 
   @ViewChild('archivoInput') private archivoInput?: ElementRef<HTMLInputElement>;
+
+  // --- Navegación de vistas ---
+  private readonly route = inject(ActivatedRoute);
+  protected vista: 'lista' | 'formulario' | 'detalle' = 'lista';
+
+  // --- Listado ---
+  protected servicios: Servicio[] = [];
+  protected cargando = false;
+  protected errorCarga = '';
+  protected filtroEstado = '';
+  protected filtroCategoria = '';
+
+  // --- Detalle ---
+  protected servicioSeleccionado: Servicio | null = null;
+
+  // --- Opciones de categoría (usadas en filtros Y en el formulario) ---
+  protected readonly categorias: string[] = [
+    'Gastronomia',
+    'Bienestar y Spa',
+    'Transporte',
+    'Tours y Actividades',
+    'Otros',
+  ];
 
   // FormArray declarado antes que form para referenciarlo en el group.
   protected readonly horarios: FormArray<FormGroup> = this.fb.array<FormGroup>([
@@ -57,6 +77,73 @@ export class Servicios {
     requisitosRestricciones: this.fb.nonNullable.control(''),
     disponibilidadHorarios: this.horarios,
   });
+
+  ngOnInit(): void {
+    const vistaRuta = this.route.snapshot.data['vista'] as string;
+    this.vista = vistaRuta === 'formulario' ? 'formulario' : 'lista';
+    if (this.vista === 'lista') {
+      this.cargarServicios();
+    }
+  }
+
+  get serviciosFiltrados(): Servicio[] {
+    return this.servicios.filter(s => {
+      const porEstado = !this.filtroEstado || s.estado === this.filtroEstado;
+      const porCategoria = !this.filtroCategoria || s.categoria === this.filtroCategoria;
+      return porEstado && porCategoria;
+    });
+  }
+
+  get totalServicios(): number { return this.servicios.length; }
+  get totalActivos(): number { return this.servicios.filter(s => s.estado === 'ACTIVO').length; }
+  get totalInactivos(): number { return this.servicios.filter(s => s.estado === 'INACTIVO').length; }
+
+  cargarServicios(): void {
+    this.cargando = true;
+    this.errorCarga = '';
+    this.api.consultarTodosServicios().subscribe({
+      next: (data) => { this.servicios = data; this.cargando = false; },
+      error: () => { this.errorCarga = 'Error al cargar los servicios.'; this.cargando = false; },
+    });
+  }
+
+  irAFormulario(): void {
+    this.limpiarMensajes();
+    this.vista = 'formulario';
+  }
+
+  irALista(): void {
+    this.vista = 'lista';
+    this.cargarServicios();
+  }
+
+  verDetalle(s: Servicio): void {
+    this.servicioSeleccionado = s;
+    this.vista = 'detalle';
+  }
+
+  toggleEstado(s: Servicio, event: Event): void {
+    event.stopPropagation();
+    const nuevoEstado: EstadoServicio = s.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    this.api.cambiarEstadoServicio(s.id, nuevoEstado).subscribe({
+      next: (actualizado) => {
+        const idx = this.servicios.findIndex(x => x.id === actualizado.id);
+        if (idx !== -1) { this.servicios[idx] = actualizado; }
+        if (this.servicioSeleccionado?.id === actualizado.id) {
+          this.servicioSeleccionado = actualizado;
+        }
+      },
+      error: () => { this.mensajeError = 'No se pudo cambiar el estado del servicio.'; },
+    });
+  }
+
+  badgeClaseEstado(estado: string): string {
+    return estado === 'ACTIVO' ? 'badge-activo' : 'badge-inactivo';
+  }
+
+  badgeTextoEstado(estado: string): string {
+    return estado === 'ACTIVO' ? '✓ Activo' : 'Inactivo';
+  }
 
   /** Devuelve el control de un campo dentro del horario en el indice dado. */
   protected horarioControl(i: number, campo: string): AbstractControl | null {
@@ -121,6 +208,7 @@ export class Servicios {
         this.enviando = false;
         this.mensajeExito = `Servicio "${creado.nombre}" creado correctamente.`;
         this.reiniciar();
+        setTimeout(() => { this.irALista(); }, 2000);
       },
       error: (e: ApiError) => {
         this.enviando = false;

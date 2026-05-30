@@ -1,7 +1,7 @@
 import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from '@angular/common/http';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AppRouterModule } from './app-router/app-router-module';
 import { App } from './app';
@@ -13,7 +13,7 @@ import { Perfiles } from './perfiles/perfiles';
 
 @NgModule({
   declarations: [App, Reservas, Habitaciones, Servicios, Ofertas, Perfiles],
-  imports: [BrowserModule, HttpClientModule, ReactiveFormsModule, AppRouterModule],
+  imports: [BrowserModule, HttpClientModule, FormsModule, ReactiveFormsModule, AppRouterModule],
   providers: [provideBrowserGlobalErrorListeners()],
   bootstrap: [App],
 })

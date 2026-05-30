@@ -21,6 +21,8 @@ public class Perfil {
     private String cedula;
     private String contrasenaHash;
     private Rol rol;
+    /** Notas internas del staff sobre el huesped (no visible para el cliente). */
+    private String notasInternas;
 
     /** Constructor sin argumentos requerido por Jackson. */
     public Perfil() {
@@ -92,4 +94,7 @@ public class Perfil {
     public void setRol(Rol rol) {
         this.rol = rol;
     }
+
+    public String getNotasInternas() { return notasInternas; }
+    public void setNotasInternas(String notasInternas) { this.notasInternas = notasInternas; }
 }

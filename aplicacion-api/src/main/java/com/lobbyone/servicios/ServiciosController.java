@@ -6,7 +6,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,6 +53,32 @@ public class ServiciosController {
     @GetMapping
     public List<Servicio> consultarActivos() {
         return service.consultarActivos();
+    }
+
+    /**
+     * GET /servicios/todos — devuelve todos los servicios (ACTIVO e INACTIVO).
+     * Solo para el administrador; el cliente usa GET /servicios.
+     */
+    @GetMapping("/todos")
+    public List<Servicio> consultarTodos() {
+        return service.consultarTodos();
+    }
+
+    /**
+     * PATCH /servicios/{id}/estado — activa o desactiva un servicio.
+     * Cuerpo JSON: { "estado": "ACTIVO" } o { "estado": "INACTIVO" }
+     */
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<Servicio> cambiarEstado(
+            @PathVariable String id,
+            @RequestBody Map<String, String> cuerpo) {
+        Servicio.EstadoServicio nuevoEstado;
+        try {
+            nuevoEstado = Servicio.EstadoServicio.valueOf(cuerpo.get("estado"));
+        } catch (Exception e) {
+            throw new ValidacionException(Map.of("estado", "Estado no valido. Use ACTIVO o INACTIVO."));
+        }
+        return ResponseEntity.ok(service.cambiarEstado(id, nuevoEstado));
     }
 
     @ExceptionHandler(ValidacionException.class)

@@ -1,290 +1,742 @@
 <section class="reservas">
 
-  <!-- Indicador de pasos -->
-  @if (paso < 6) {
-    <nav class="pasos-nav">
-      <span class="paso-item" [class.activo]="paso === 1" [class.completo]="paso > 1">1. Fechas</span>
-      <span class="paso-sep">›</span>
-      <span class="paso-item" [class.activo]="paso === 2" [class.completo]="paso > 2">2. Oferta</span>
-      <span class="paso-sep">›</span>
-      <span class="paso-item" [class.activo]="paso === 3" [class.completo]="paso > 3">3. Habitacion</span>
-      <span class="paso-sep">›</span>
-      <span class="paso-item" [class.activo]="paso === 4" [class.completo]="paso > 4">4. Servicios</span>
-      <span class="paso-sep">›</span>
-      <span class="paso-item" [class.activo]="paso === 5">5. Confirmar</span>
-    </nav>
-  }
+  <!-- ==================== VISTA: MIS RESERVAS (CLIENTE) ==================== -->
+  @if (vista === 'misReservas') {
 
-  <!-- Error global (usado en varios pasos) -->
-  @if (mensajeError) {
-    <p class="error-general">{{ mensajeError }}</p>
-  }
-
-  <!-- ==================== PASO 1: FECHAS ==================== -->
-  @if (paso === 1) {
-    <h1>Reservar habitacion</h1>
-
-    <form [formGroup]="fechasForm" (ngSubmit)="avanzarFechas()" novalidate>
-
-      <label>
-        Fecha de entrada
-        <input type="date" formControlName="fechaEntrada" [min]="hoy" />
-      </label>
-      @if (erroresBackend['fechaEntrada']) {
-        <small class="error">{{ erroresBackend['fechaEntrada'] }}</small>
-      } @else if (fechasForm.controls.fechaEntrada.invalid && fechasForm.controls.fechaEntrada.touched) {
-        <small class="error">La fecha de entrada es obligatoria.</small>
-      }
-
-      <label>
-        Fecha de salida
-        <input type="date" formControlName="fechaSalida" [min]="hoy" />
-      </label>
-      @if (erroresBackend['fechaSalida']) {
-        <small class="error">{{ erroresBackend['fechaSalida'] }}</small>
-      } @else if (fechasForm.controls.fechaSalida.invalid && fechasForm.controls.fechaSalida.touched) {
-        <small class="error">La fecha de salida es obligatoria.</small>
-      }
-
-      <div class="acciones">
-        <button type="submit">Siguiente →</button>
-      </div>
-
-    </form>
-  }
-
-  <!-- ==================== PASO 2: OFERTA ==================== -->
-  @if (paso === 2) {
-    <h2>Oferta (opcional)</h2>
-    <p class="ayuda">Las ofertas son paquetes con tipo de habitacion y servicios predefinidos a precio fijo por noche. Puedes continuar sin oferta.</p>
-
-    @if (ofertaSeleccionada) {
-      <div class="oferta-activa">
-        <strong>Oferta aplicada:</strong> {{ ofertaSeleccionada.nombre }}
-        · Tipo: {{ ofertaSeleccionada.tipoHabitacion }}
-        · ${{ ofertaSeleccionada.precio }}/noche
-        <button type="button" class="btn-link" (click)="quitarOferta()">Quitar</button>
-      </div>
-    }
-
-    @if (ofertasActivas.length === 0) {
-      <p class="aviso">No hay ofertas activas disponibles.</p>
-    } @else {
-      <ul class="lista-cards">
-        @for (o of ofertasActivas; track o.id) {
-          <li class="card" [class.seleccionada]="ofertaSeleccionada?.id === o.id">
-            <p class="card-titulo">{{ o.nombre }}</p>
-            <p class="card-meta">{{ o.tipoHabitacion }} · ${{ o.precio }}/noche · Hasta {{ o.vigenciaHasta }}</p>
-            <p class="card-desc">{{ o.descripcion }}</p>
-            @if (ofertaSeleccionada?.id === o.id) {
-              <span class="badge-ok">✓ Seleccionada</span>
-            } @else {
-              <button type="button" (click)="seleccionarOferta(o)">Aplicar esta oferta</button>
-            }
-          </li>
-        }
-      </ul>
-    }
-
-    <div class="acciones">
-      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
-      <button type="button" [disabled]="cargandoDisponibilidad" (click)="avanzarOferta()">
-        {{ cargandoDisponibilidad ? 'Buscando...' : 'Buscar habitaciones →' }}
-      </button>
+    <div class="encabezado-seccion">
+      <h1>Mis reservas</h1>
+      <button type="button" (click)="irACrearReserva()">+ Nueva reserva</button>
     </div>
-  }
 
-  <!-- ==================== PASO 3: HABITACION ==================== -->
-  @if (paso === 3) {
-    <h2>Selecciona una habitacion</h2>
-
-    @if (ofertaSeleccionada) {
-      <p class="ayuda">Mostrando habitaciones de tipo <strong>{{ ofertaSeleccionada.tipoHabitacion }}</strong> (definido por la oferta).</p>
-    }
-
-    @if (cargandoDisponibilidad) {
-      <p class="cargando">Buscando habitaciones disponibles...</p>
-    } @else if (habitacionesDisponibles.length === 0) {
-      <p class="aviso">No hay habitaciones disponibles para las fechas indicadas.</p>
-    } @else {
-      <ul class="lista-cards">
-        @for (h of habitacionesDisponibles; track h.id) {
-          <li class="card" [class.seleccionada]="habitacionSeleccionada?.id === h.id">
-            <p class="card-titulo">Habitacion #{{ h.numero }}</p>
-            <p class="card-meta">{{ h.tipo }} · Piso {{ h.piso }} · {{ h.capacidad }} persona(s) · {{ h.tamanoM2 }} m²</p>
-            <p class="card-meta">{{ h.configuracionCamas }}</p>
-            <p class="card-precio">${{ h.precioPorNoche }} / noche</p>
-            @if (h.amenidades && h.amenidades.length > 0) {
-              <p class="card-meta">{{ h.amenidades.join(', ') }}</p>
-            }
-            @if (h.descripcion) {
-              <p class="card-desc">{{ h.descripcion }}</p>
-            }
-            @if (habitacionSeleccionada?.id === h.id) {
-              <span class="badge-ok">✓ Seleccionada</span>
-            } @else {
-              <button type="button" (click)="seleccionarHabitacion(h)">Seleccionar</button>
-            }
-          </li>
-        }
-      </ul>
-    }
-
-    <div class="acciones">
-      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+    <!-- Filtros de estado -->
+    <div class="filtros-cliente">
       <button type="button"
-        [disabled]="!habitacionSeleccionada || cargandoDisponibilidad"
-        (click)="avanzarHabitacion()">
-        Siguiente →
+              [class]="filtroEstadoCliente === '' ? 'filtro-pill filtro-pill-activo' : 'filtro-pill'"
+              (click)="filtroEstadoCliente = ''">
+        Todas
+      </button>
+      <button type="button"
+              [class]="filtroEstadoCliente === 'ACTIVA' ? 'filtro-pill filtro-pill-activo' : 'filtro-pill'"
+              (click)="filtroEstadoCliente = 'ACTIVA'">
+        Activas
+      </button>
+      <button type="button"
+              [class]="filtroEstadoCliente === 'CANCELADA' ? 'filtro-pill filtro-pill-activo' : 'filtro-pill'"
+              (click)="filtroEstadoCliente = 'CANCELADA'">
+        Canceladas
       </button>
     </div>
-  }
 
-  <!-- ==================== PASO 4: SERVICIOS ==================== -->
-  @if (paso === 4) {
-    <h2>Servicios adicionales</h2>
-    <p class="ayuda">Agrega los servicios que desees. Los incluidos en el paquete no tienen costo adicional.</p>
-
-    @if (serviciosActivos.length === 0) {
-      <p class="aviso">No hay servicios disponibles en el catalogo.</p>
-    } @else {
-      <ul class="servicios-lista">
-        @for (s of serviciosActivos; track s.id) {
-          <li class="servicio-item">
-            @if (estaEnBundle(s.id)) {
-              <div class="servicio-bundle">
-                <span class="badge-bundle">✓ Incluido en el paquete</span>
-                <strong>{{ s.nombre }}</strong>
-                <span class="meta">{{ s.categoria }}</span>
-              </div>
-            } @else {
-              <label class="servicio-extra">
-                <input
-                  type="checkbox"
-                  [checked]="estaSeleccionado(s.id)"
-                  (change)="toggleServicio(s.id)"
-                />
-                <span>
-                  <strong>{{ s.nombre }}</strong>
-                  <span class="meta">{{ s.categoria }} · ${{ s.precio }} ({{ s.unidadCobro }})</span>
-                </span>
-              </label>
-            }
-          </li>
-        }
-      </ul>
-    }
-
-    @if (erroresBackend['servicios']) {
-      <small class="error">{{ erroresBackend['servicios'] }}</small>
-    }
-
-    <div class="acciones">
-      <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
-      <button type="button" (click)="avanzarServicios()">Siguiente →</button>
-    </div>
-  }
-
-  <!-- ==================== PASO 5: COTIZAR Y CONFIRMAR ==================== -->
-  @if (paso === 5) {
-    <h2>Resumen y confirmacion</h2>
-
-    <div class="resumen-box">
-      <p><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</p>
-      @if (ofertaSeleccionada) {
-        <p><strong>Oferta:</strong> {{ ofertaSeleccionada.nombre }}</p>
-      }
-      <p>
-        <strong>Entrada:</strong> {{ fechasForm.value.fechaEntrada }}
-        &nbsp;·&nbsp;
-        <strong>Salida:</strong> {{ fechasForm.value.fechaSalida }}
-      </p>
-    </div>
-
-    <form [formGroup]="emailForm" novalidate>
-      <label>
-        Email de contacto
-        <input type="email" formControlName="emailContacto" autocomplete="email" />
-      </label>
-      @if (emailForm.controls.emailContacto.invalid && emailForm.controls.emailContacto.touched) {
-        <small class="error">Ingresa un email valido.</small>
-      }
-    </form>
-
-    @if (!desglose) {
-      <div class="acciones">
-        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
-        <button type="button" [disabled]="cotizando" (click)="cotizar()">
-          {{ cotizando ? 'Calculando...' : 'Ver cotizacion' }}
+    @if (cargandoMisReservas) {
+      <p class="cargando">Cargando tus reservas...</p>
+    } @else if (errorMisReservas) {
+      <p class="error-general">{{ errorMisReservas }}</p>
+    } @else if (misReservas.length === 0) {
+      <div class="reservas-vacias">
+        <p>Aún no tienes reservas registradas.</p>
+        <button type="button" (click)="irACrearReserva()">
+          Reservar ahora
         </button>
       </div>
+    } @else if (misReservasFiltradas.length === 0) {
+      <p class="aviso">No tienes reservas en ese estado.</p>
+    } @else {
+      <ul class="lista-mis-reservas">
+        @for (r of misReservasFiltradas; track r.id) {
+          <li class="card-mi-reserva">
+            <div class="card-reserva-header">
+              <span class="reserva-id">#{{ r.id.slice(0,8).toUpperCase() }}</span>
+              <span class="badge-estado-reserva" [ngClass]="badgeEstadoClase(r.estado)">
+                {{ badgeEstadoTexto(r.estado) }}
+              </span>
+            </div>
+            <p class="card-hab">
+              Hab. {{ numeroHabitacion(r.habitacionId) }}
+              @if (tipoHabitacion(r.habitacionId)) {
+                · {{ tipoHabitacion(r.habitacionId) }}
+              }
+            </p>
+            <p class="card-meta">
+              {{ r.fechaEntrada }} → {{ r.fechaSalida }}
+              · {{ calcularNoches(r.fechaEntrada, r.fechaSalida) }} noches
+            </p>
+            @if (r.ofertaAplicada) {
+              <p class="card-meta card-oferta">
+                Paquete: {{ nombreOferta(r.ofertaAplicada) }}
+              </p>
+            }
+            <p class="reserva-monto">${{ r.montoTotal }}</p>
+            <div class="acciones">
+              <button type="button" class="btn-secundario"
+                      (click)="verDetalleCliente(r)">
+                Ver detalles
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
     }
 
-    @if (desglose) {
-      <div class="desglose">
-        <h3>Desglose del costo</h3>
-        <table class="tabla-desglose">
-          <tbody>
-            <tr>
-              <td>{{ desglose.concepto }}</td>
-              <td>${{ desglose.precioPorNoche }} × {{ desglose.noches }} noche(s)</td>
-              <td class="monto">${{ desglose.subtotalAlojamiento }}</td>
-            </tr>
-            @for (sv of desglose.serviciosAdicionales; track sv.servicioId) {
-              <tr>
-                <td>{{ sv.nombre }}</td>
-                <td class="meta-celda">cobro plano</td>
-                <td class="monto">${{ sv.precio }}</td>
-              </tr>
-            }
-            @if (desglose.serviciosAdicionales.length === 0) {
-              <tr>
-                <td colspan="3" class="meta-celda">Sin servicios adicionales cobrados.</td>
-              </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr class="fila-total">
-              <td colspan="2"><strong>TOTAL</strong></td>
-              <td class="monto total"><strong>${{ desglose.montoTotal }}</strong></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+  }
 
-      @if (erroresBackend['perfil'] || erroresBackend['habitacion']) {
-        <p class="error-general">
-          {{ erroresBackend['perfil'] || erroresBackend['habitacion'] }}
+  <!-- ==================== VISTA: DETALLE RESERVA (CLIENTE) ==================== -->
+  @if (vista === 'detalleCliente' && reservaDetalleCliente) {
+
+    <button type="button" class="btn-volver-link" (click)="irAMisReservas()">
+      ← Volver a mis reservas
+    </button>
+
+    <div class="detalle-header">
+      <h1>Reserva #{{ reservaDetalleCliente.id.slice(0,8).toUpperCase() }}</h1>
+      <span class="badge-estado-reserva"
+            [ngClass]="badgeEstadoClase(reservaDetalleCliente.estado)">
+        {{ badgeEstadoTexto(reservaDetalleCliente.estado) }}
+      </span>
+    </div>
+
+    <!-- Estadía -->
+    <div class="detalle-seccion">
+      <h2>Tu estadía</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Habitación</span>
+          <span class="detalle-valor">
+            Nº {{ numeroHabitacion(reservaDetalleCliente.habitacionId) }}
+            @if (tipoHabitacion(reservaDetalleCliente.habitacionId)) {
+              · {{ tipoHabitacion(reservaDetalleCliente.habitacionId) }}
+            }
+          </span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Check-in</span>
+          <span class="detalle-valor">{{ reservaDetalleCliente.fechaEntrada }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Check-out</span>
+          <span class="detalle-valor">{{ reservaDetalleCliente.fechaSalida }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Noches</span>
+          <span class="detalle-valor">
+            {{ calcularNoches(reservaDetalleCliente.fechaEntrada, reservaDetalleCliente.fechaSalida) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desglose de costo -->
+    <div class="detalle-seccion">
+      <h2>Desglose del costo</h2>
+
+      @if (reservaDetalleCliente.ofertaAplicada) {
+        <div class="detalle-campo" style="margin-bottom:0.75rem">
+          <span class="detalle-label">Paquete aplicado</span>
+          <span class="detalle-valor">
+            {{ nombreOferta(reservaDetalleCliente.ofertaAplicada) }}
+          </span>
+        </div>
+      }
+
+      @if (reservaDetalleCliente.serviciosContratados.length > 0) {
+        <p class="detalle-label" style="margin-bottom:0.4rem">
+          Servicios incluidos
+        </p>
+        <div class="amenidades-lista" style="margin-bottom:0.75rem">
+          @for (id of reservaDetalleCliente.serviciosContratados; track id) {
+            <span class="amenidad-chip">{{ nombreServicio(id) }}</span>
+          }
+        </div>
+      }
+
+      <p class="detalle-precio">${{ reservaDetalleCliente.montoTotal }}</p>
+    </div>
+
+    <!-- Número de confirmación -->
+    <div class="detalle-seccion">
+      <h2>Confirmación</h2>
+      <div class="detalle-campo">
+        <span class="detalle-label">Número de reserva</span>
+        <span class="detalle-valor" style="font-family:monospace;font-size:0.85rem">
+          {{ reservaDetalleCliente.id }}
+        </span>
+      </div>
+      <div class="detalle-campo" style="margin-top:0.5rem">
+        <span class="detalle-label">Email de contacto</span>
+        <span class="detalle-valor">{{ reservaDetalleCliente.emailContacto }}</span>
+      </div>
+    </div>
+
+  }
+
+  <!-- ==================== VISTA: LISTADO ADMIN ==================== -->
+  @if (vista === 'lista') {
+
+    <div class="encabezado-seccion">
+      <h1>Gestion de reservas</h1>
+      <a routerLink="/admin/reservas/nueva">
+        <button>+ Nueva reserva</button>
+      </a>
+    </div>
+
+    <div class="filtros">
+      <input type="text" [(ngModel)]="filtroBusqueda"
+             placeholder="Buscar por huésped, email, habitación o ID" />
+      <select [(ngModel)]="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVA">Activas</option>
+        <option value="MODIFICADA">Modificadas</option>
+        <option value="CANCELADA">Canceladas</option>
+      </select>
+    </div>
+
+    <div class="metricas">
+      <div class="metrica">
+        <span class="metrica-numero">{{ reservas.length }}</span>
+        <span class="metrica-label">Total</span>
+      </div>
+      <div class="metrica metrica-verde">
+        <span class="metrica-numero">{{ totalActivas }}</span>
+        <span class="metrica-label">Activas</span>
+      </div>
+      <div class="metrica metrica-rojo">
+        <span class="metrica-numero">{{ totalCanceladas }}</span>
+        <span class="metrica-label">Canceladas</span>
+      </div>
+    </div>
+
+    @if (cargandoReservas) {
+      <p class="cargando">Cargando reservas...</p>
+    }
+    @if (errorCarga) {
+      <p class="error-general">{{ errorCarga }}</p>
+    }
+
+    @if (!cargandoReservas && reservasFiltradas.length > 0) {
+      <ul class="lista-reservas">
+        @for (r of reservasFiltradas; track r.id) {
+          <li class="card-reserva">
+            <div class="card-reserva-header">
+              <span class="reserva-id">#{{ r.id.slice(0, 8).toUpperCase() }}</span>
+              <span class="badge-estado-reserva" [ngClass]="badgeEstadoClase(r.estado)">
+                {{ badgeEstadoTexto(r.estado) }}
+              </span>
+            </div>
+            <p class="card-huesped">{{ nombreHuesped(r.perfilId) }}</p>
+            <p class="card-meta">
+              Hab. {{ numeroHabitacion(r.habitacionId) }}
+              {{ tipoHabitacion(r.habitacionId) ? '· ' + tipoHabitacion(r.habitacionId) : '' }}
+              · {{ calcularNoches(r.fechaEntrada, r.fechaSalida) }} noches
+            </p>
+            <p class="card-meta">{{ r.fechaEntrada }} → {{ r.fechaSalida }}</p>
+            <p class="card-meta reserva-email">{{ r.emailContacto }}</p>
+            <p class="reserva-monto">${{ r.montoTotal }}</p>
+            <p class="card-meta reserva-fecha-creacion">Creada: {{ r.fechaCreacion }}</p>
+            <div class="acciones">
+              <button type="button" class="btn-secundario" (click)="verDetalleReserva(r)">
+                Ver detalles
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (!cargandoReservas && reservasFiltradas.length === 0 && reservas.length > 0) {
+      <p class="aviso">No hay reservas que coincidan con la búsqueda.</p>
+    }
+    @if (!cargandoReservas && reservas.length === 0 && !errorCarga) {
+      <p class="aviso">No hay reservas registradas todavía.</p>
+    }
+
+  }
+
+  <!-- ==================== VISTA: DETALLE ==================== -->
+  @if (vista === 'detalle' && reservaSeleccionada) {
+
+    <button type="button" class="btn-volver-link" (click)="irAListaReservas()">
+      ← Volver al listado
+    </button>
+
+    <div class="detalle-header">
+      <h1>Reserva #{{ reservaSeleccionada.id.slice(0, 8).toUpperCase() }}</h1>
+      <span class="badge-estado-reserva"
+            [ngClass]="badgeEstadoClase(reservaSeleccionada.estado)">
+        {{ badgeEstadoTexto(reservaSeleccionada.estado) }}
+      </span>
+    </div>
+
+    <!-- Bloque del huésped -->
+    <div class="detalle-seccion">
+      <h2>Huésped</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Nombre</span>
+          <span class="detalle-valor">{{ nombreHuesped(reservaSeleccionada.perfilId) }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Email de contacto</span>
+          <span class="detalle-valor">{{ reservaSeleccionada.emailContacto }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque de hospedaje -->
+    <div class="detalle-seccion">
+      <h2>Hospedaje</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">Habitación</span>
+          <span class="detalle-valor">
+            Nº {{ numeroHabitacion(reservaSeleccionada.habitacionId) }}
+            {{ tipoHabitacion(reservaSeleccionada.habitacionId) ? '· ' + tipoHabitacion(reservaSeleccionada.habitacionId) : '' }}
+          </span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Check-in</span>
+          <span class="detalle-valor">{{ reservaSeleccionada.fechaEntrada }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Check-out</span>
+          <span class="detalle-valor">{{ reservaSeleccionada.fechaSalida }}</span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Noches</span>
+          <span class="detalle-valor">
+            {{ calcularNoches(reservaSeleccionada.fechaEntrada, reservaSeleccionada.fechaSalida) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloque financiero -->
+    <div class="detalle-seccion">
+      <h2>Desglose financiero</h2>
+      @if (reservaSeleccionada.ofertaAplicada) {
+        <div class="detalle-campo" style="margin-bottom:0.75rem">
+          <span class="detalle-label">Paquete / Oferta aplicada</span>
+          <span class="detalle-valor">{{ nombreOferta(reservaSeleccionada.ofertaAplicada) }}</span>
+        </div>
+      }
+      @if (reservaSeleccionada.serviciosContratados.length > 0) {
+        <p class="detalle-label" style="margin-bottom:0.4rem">Servicios contratados</p>
+        <div class="amenidades-lista">
+          @for (id of reservaSeleccionada.serviciosContratados; track id) {
+            <span class="amenidad-chip">{{ nombreServicio(id) }}</span>
+          }
+        </div>
+      } @else {
+        <p class="aviso" style="font-size:0.85rem">Sin servicios adicionales.</p>
+      }
+      <p class="detalle-precio" style="margin-top:1rem">${{ reservaSeleccionada.montoTotal }}</p>
+    </div>
+
+    <!-- Bloque de metadatos -->
+    <div class="detalle-seccion">
+      <h2>Metadatos</h2>
+      <div class="detalle-grid">
+        <div class="detalle-campo">
+          <span class="detalle-label">ID completo</span>
+          <span class="detalle-valor" style="font-family:monospace;font-size:0.8rem">
+            {{ reservaSeleccionada.id }}
+          </span>
+        </div>
+        <div class="detalle-campo">
+          <span class="detalle-label">Fecha de creación</span>
+          <span class="detalle-valor">{{ reservaSeleccionada.fechaCreacion }}</span>
+        </div>
+      </div>
+    </div>
+
+  }
+
+  <!-- ==================== VISTA: CREAR ADMIN — PASO 0 (búsqueda) ==================== -->
+  @if (vista === 'crearAdmin' && !perfilIdAdmin) {
+
+    <div class="encabezado-seccion">
+      <h1>Crear reserva para un huésped</h1>
+      <button type="button" class="btn-secundario" (click)="irAListaReservas()">
+        ← Volver al listado
+      </button>
+    </div>
+
+    <div class="busqueda-huesped">
+      <label>
+        Buscar huésped por email
+        <div style="display:flex; gap:0.5rem; margin-top:0.25rem">
+          <input type="email" [(ngModel)]="emailBusqueda"
+                 placeholder="cliente@ejemplo.com"
+                 (keydown.enter)="buscarHuesped()" />
+          <button type="button" (click)="buscarHuesped()" [disabled]="buscandoHuesped">
+            {{ buscandoHuesped ? 'Buscando...' : 'Buscar' }}
+          </button>
+        </div>
+      </label>
+
+      @if (errorBusqueda) {
+        <p class="error-general">{{ errorBusqueda }}</p>
+        <p style="font-size:0.85rem; color:#555; margin-top:0.25rem">
+          ¿El cliente no tiene cuenta?
+          <a routerLink="/admin/perfiles/nuevo" style="color:#2563eb">
+            Crear huésped nuevo
+          </a>
         </p>
       }
+    </div>
 
-      <div class="acciones">
-        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
-        <button type="button" class="btn-confirmar" [disabled]="confirmando" (click)="confirmar()">
-          {{ confirmando ? 'Confirmando...' : 'Confirmar reserva' }}
+    @if (huespedEncontrado) {
+      <div class="huesped-encontrado">
+        <p style="font-weight:700; color:#1e7e34; margin:0 0 0.5rem">✓ Huésped encontrado</p>
+        <p style="margin:0; font-size:0.95rem"><strong>{{ huespedEncontrado.nombre }}</strong></p>
+        <p style="margin:0; font-size:0.85rem; color:#555">{{ huespedEncontrado.email }}</p>
+        @if (huespedEncontrado.telefono) {
+          <p style="margin:0; font-size:0.85rem; color:#555">{{ huespedEncontrado.telefono }}</p>
+        }
+        <button type="button" style="margin-top:0.75rem" (click)="iniciarCreacionAdmin()">
+          Continuar con la reserva →
         </button>
       </div>
     }
+
   }
 
-  <!-- ==================== PASO 6: CONFIRMADO ==================== -->
-  @if (paso === 6 && reservaCreada) {
-    <div class="confirmado">
-      <div class="icono-ok">✓</div>
-      <h2>¡Reserva confirmada!</h2>
-      <p class="exito-msg">Tu reserva esta activa. Se envio un correo de confirmacion a <strong>{{ reservaCreada.emailContacto }}</strong>.</p>
+  <!-- ==================== FLUJO COMPARTIDO (cliente y admin) — PASOS 1–6 ==================== -->
+  @if (enFlujoCreacion) {
 
-      <ul class="detalle-reserva">
-        <li><strong>ID de reserva:</strong> <code>{{ reservaCreada.id }}</code></li>
-        <li><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</li>
-        <li><strong>Entrada:</strong> {{ reservaCreada.fechaEntrada }}</li>
-        <li><strong>Salida:</strong> {{ reservaCreada.fechaSalida }}</li>
-        <li><strong>Total:</strong> ${{ reservaCreada.montoTotal }}</li>
-        <li><strong>Estado:</strong> {{ reservaCreada.estado }}</li>
-      </ul>
+    <!-- Botón volver a Mis Reservas (solo en el paso 1 del flujo cliente) -->
+    @if (vista === 'crear' && paso === 1) {
+      <button type="button" class="btn-volver-link" (click)="irAMisReservas()">
+        ← Mis reservas
+      </button>
+    }
 
-      <button type="button" (click)="nuevaReserva()">Hacer otra reserva</button>
-    </div>
+    <!-- Banner de contexto admin (solo cuando es una creación admin) -->
+    @if (vista === 'crearAdmin' && huespedEncontrado) {
+      <div class="banner-huesped-admin">
+        <p>
+          Creando reserva para:
+          <strong>{{ huespedEncontrado.nombre }}</strong>
+          ({{ huespedEncontrado.email }})
+        </p>
+      </div>
+    }
+
+    <!-- Indicador de pasos -->
+    @if (paso < 6) {
+      <nav class="pasos-nav">
+        <span class="paso-item" [class.activo]="paso === 1" [class.completo]="paso > 1">1. Fechas</span>
+        <span class="paso-sep">›</span>
+        <span class="paso-item" [class.activo]="paso === 2" [class.completo]="paso > 2">2. Oferta</span>
+        <span class="paso-sep">›</span>
+        <span class="paso-item" [class.activo]="paso === 3" [class.completo]="paso > 3">3. Habitacion</span>
+        <span class="paso-sep">›</span>
+        <span class="paso-item" [class.activo]="paso === 4" [class.completo]="paso > 4">4. Servicios</span>
+        <span class="paso-sep">›</span>
+        <span class="paso-item" [class.activo]="paso === 5">5. Confirmar</span>
+      </nav>
+    }
+
+    <!-- Error global (usado en varios pasos) -->
+    @if (mensajeError) {
+      <p class="error-general">{{ mensajeError }}</p>
+    }
+
+    <!-- ==================== PASO 1: FECHAS ==================== -->
+    @if (paso === 1) {
+      @if (vista === 'crear') {
+        <h1>Reservar habitacion</h1>
+      }
+
+      <form [formGroup]="fechasForm" (ngSubmit)="avanzarFechas()" novalidate>
+
+        <label>
+          Fecha de entrada
+          <input type="date" formControlName="fechaEntrada" [min]="hoy" />
+        </label>
+        @if (erroresBackend['fechaEntrada']) {
+          <small class="error">{{ erroresBackend['fechaEntrada'] }}</small>
+        } @else if (fechasForm.controls.fechaEntrada.invalid && fechasForm.controls.fechaEntrada.touched) {
+          <small class="error">La fecha de entrada es obligatoria.</small>
+        }
+
+        <label>
+          Fecha de salida
+          <input type="date" formControlName="fechaSalida" [min]="hoy" />
+        </label>
+        @if (erroresBackend['fechaSalida']) {
+          <small class="error">{{ erroresBackend['fechaSalida'] }}</small>
+        } @else if (fechasForm.controls.fechaSalida.invalid && fechasForm.controls.fechaSalida.touched) {
+          <small class="error">La fecha de salida es obligatoria.</small>
+        }
+
+        <label>
+          Capacidad mínima <span class="label-opcional">(opcional)</span>
+          <input type="number" formControlName="capacidad" min="1" step="1"
+                 placeholder="N° de personas" />
+        </label>
+        @if (fechasForm.controls.capacidad.invalid && fechasForm.controls.capacidad.touched) {
+          <small class="error">La capacidad debe ser un número mayor que 0.</small>
+        }
+
+        <div class="acciones">
+          <button type="submit">Siguiente →</button>
+        </div>
+
+      </form>
+    }
+
+    <!-- ==================== PASO 2: OFERTA ==================== -->
+    @if (paso === 2) {
+      <h2>Oferta (opcional)</h2>
+      <p class="ayuda">Las ofertas son paquetes con tipo de habitacion y servicios predefinidos a precio fijo por noche. Puedes continuar sin oferta.</p>
+
+      @if (ofertaSeleccionada) {
+        <div class="oferta-activa">
+          <strong>Oferta aplicada:</strong> {{ ofertaSeleccionada.nombre }}
+          · Tipo: {{ ofertaSeleccionada.tipoHabitacion }}
+          · ${{ ofertaSeleccionada.precio }}/noche
+          <button type="button" class="btn-link" (click)="quitarOferta()">Quitar</button>
+        </div>
+      }
+
+      @if (ofertasActivas.length === 0) {
+        <p class="aviso">No hay ofertas activas disponibles.</p>
+      } @else {
+        <ul class="lista-cards">
+          @for (o of ofertasActivas; track o.id) {
+            <li class="card" [class.seleccionada]="ofertaSeleccionada?.id === o.id">
+              <p class="card-titulo">{{ o.nombre }}</p>
+              <p class="card-meta">{{ o.tipoHabitacion }} · ${{ o.precio }}/noche · Hasta {{ o.vigenciaHasta }}</p>
+              <p class="card-desc">{{ o.descripcion }}</p>
+              @if (ofertaSeleccionada?.id === o.id) {
+                <span class="badge-ok">✓ Seleccionada</span>
+              } @else {
+                <button type="button" (click)="seleccionarOferta(o)">Aplicar esta oferta</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+        <button type="button" [disabled]="cargandoDisponibilidad" (click)="avanzarOferta()">
+          {{ cargandoDisponibilidad ? 'Buscando...' : 'Buscar habitaciones →' }}
+        </button>
+      </div>
+    }
+
+    <!-- ==================== PASO 3: HABITACION ==================== -->
+    @if (paso === 3) {
+      <h2>Selecciona una habitacion</h2>
+
+      @if (ofertaSeleccionada) {
+        <p class="ayuda">Mostrando habitaciones de tipo <strong>{{ ofertaSeleccionada.tipoHabitacion }}</strong> (definido por la oferta).</p>
+      }
+
+      @if (cargandoDisponibilidad) {
+        <p class="cargando">Buscando habitaciones disponibles...</p>
+      } @else if (habitacionesDisponibles.length === 0) {
+        <p class="aviso">No hay habitaciones disponibles para las fechas indicadas.</p>
+      } @else {
+        <ul class="lista-cards">
+          @for (h of habitacionesDisponibles; track h.id) {
+            <li class="card" [class.seleccionada]="habitacionSeleccionada?.id === h.id">
+              <p class="card-titulo">Habitacion #{{ h.numero }}</p>
+              <p class="card-meta">{{ h.tipo }} · Piso {{ h.piso }} · {{ h.capacidad }} persona(s) · {{ h.tamanoM2 }} m²</p>
+              <p class="card-meta">{{ h.configuracionCamas }}</p>
+              <p class="card-precio">${{ h.precioPorNoche }} / noche</p>
+              @if (h.amenidades && h.amenidades.length > 0) {
+                <p class="card-meta">{{ h.amenidades.join(', ') }}</p>
+              }
+              @if (h.descripcion) {
+                <p class="card-desc">{{ h.descripcion }}</p>
+              }
+              @if (habitacionSeleccionada?.id === h.id) {
+                <span class="badge-ok">✓ Seleccionada</span>
+              } @else {
+                <button type="button" (click)="seleccionarHabitacion(h)">Seleccionar</button>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+        <button type="button"
+          [disabled]="!habitacionSeleccionada || cargandoDisponibilidad"
+          (click)="avanzarHabitacion()">
+          Siguiente →
+        </button>
+      </div>
+    }
+
+    <!-- ==================== PASO 4: SERVICIOS ==================== -->
+    @if (paso === 4) {
+      <h2>Servicios adicionales</h2>
+      <p class="ayuda">Agrega los servicios que desees. Los incluidos en el paquete no tienen costo adicional.</p>
+
+      @if (serviciosActivos.length === 0) {
+        <p class="aviso">No hay servicios disponibles en el catalogo.</p>
+      } @else {
+        <ul class="servicios-lista">
+          @for (s of serviciosActivos; track s.id) {
+            <li class="servicio-item">
+              @if (estaEnBundle(s.id)) {
+                <div class="servicio-bundle">
+                  <span class="badge-bundle">✓ Incluido en el paquete</span>
+                  <strong>{{ s.nombre }}</strong>
+                  <span class="meta">{{ s.categoria }}</span>
+                </div>
+              } @else {
+                <label class="servicio-extra">
+                  <input
+                    type="checkbox"
+                    [checked]="estaSeleccionado(s.id)"
+                    (change)="toggleServicio(s.id)"
+                  />
+                  <span>
+                    <strong>{{ s.nombre }}</strong>
+                    <span class="meta">{{ s.categoria }} · ${{ s.precio }} ({{ s.unidadCobro }})</span>
+                  </span>
+                </label>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      @if (erroresBackend['servicios']) {
+        <small class="error">{{ erroresBackend['servicios'] }}</small>
+      }
+
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+        <button type="button" (click)="avanzarServicios()">Siguiente →</button>
+      </div>
+    }
+
+    <!-- ==================== PASO 5: COTIZAR Y CONFIRMAR ==================== -->
+    @if (paso === 5) {
+      <h2>Resumen y confirmacion</h2>
+
+      <div class="resumen-box">
+        <p><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</p>
+        @if (ofertaSeleccionada) {
+          <p><strong>Oferta:</strong> {{ ofertaSeleccionada.nombre }}</p>
+        }
+        <p>
+          <strong>Entrada:</strong> {{ fechasForm.value.fechaEntrada }}
+          &nbsp;·&nbsp;
+          <strong>Salida:</strong> {{ fechasForm.value.fechaSalida }}
+        </p>
+      </div>
+
+      <form [formGroup]="emailForm" novalidate>
+        <label>
+          Email de contacto
+          <input type="email" formControlName="emailContacto" autocomplete="email" />
+        </label>
+        @if (emailForm.controls.emailContacto.invalid && emailForm.controls.emailContacto.touched) {
+          <small class="error">Ingresa un email valido.</small>
+        }
+      </form>
+
+      @if (!desglose) {
+        <div class="acciones">
+          <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+          <button type="button" [disabled]="cotizando" (click)="cotizar()">
+            {{ cotizando ? 'Calculando...' : 'Ver cotizacion' }}
+          </button>
+        </div>
+      }
+
+      @if (desglose) {
+        <div class="desglose">
+          <h3>Desglose del costo</h3>
+          <table class="tabla-desglose">
+            <tbody>
+              <tr>
+                <td>{{ desglose.concepto }}</td>
+                <td>${{ desglose.precioPorNoche }} × {{ desglose.noches }} noche(s)</td>
+                <td class="monto">${{ desglose.subtotalAlojamiento }}</td>
+              </tr>
+              @for (sv of desglose.serviciosAdicionales; track sv.servicioId) {
+                <tr>
+                  <td>{{ sv.nombre }}</td>
+                  <td class="meta-celda">cobro plano</td>
+                  <td class="monto">${{ sv.precio }}</td>
+                </tr>
+              }
+              @if (desglose.serviciosAdicionales.length === 0) {
+                <tr>
+                  <td colspan="3" class="meta-celda">Sin servicios adicionales cobrados.</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr class="fila-total">
+                <td colspan="2"><strong>TOTAL</strong></td>
+                <td class="monto total"><strong>${{ desglose.montoTotal }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        @if (erroresBackend['perfil'] || erroresBackend['habitacion']) {
+          <p class="error-general">
+            {{ erroresBackend['perfil'] || erroresBackend['habitacion'] }}
+          </p>
+        }
+
+        <div class="acciones">
+          <button type="button" class="btn-secundario" (click)="retroceder()">← Atrás</button>
+          <button type="button" class="btn-confirmar" [disabled]="confirmando" (click)="confirmar()">
+            {{ confirmando ? 'Confirmando...' : 'Confirmar reserva' }}
+          </button>
+        </div>
+      }
+    }
+
+    <!-- ==================== PASO 6: CONFIRMADO ==================== -->
+    @if (paso === 6 && reservaCreada) {
+      <div class="confirmado">
+        <div class="icono-ok">✓</div>
+        <h2>¡Reserva confirmada!</h2>
+        <p class="exito-msg">
+          La reserva esta activa. Se envio un correo de confirmacion a
+          <strong>{{ reservaCreada.emailContacto }}</strong>.
+        </p>
+
+        <ul class="detalle-reserva">
+          <li><strong>ID de reserva:</strong> <code>{{ reservaCreada.id }}</code></li>
+          <li><strong>Habitacion:</strong> #{{ habitacionSeleccionada?.numero }} — {{ habitacionSeleccionada?.tipo }}</li>
+          <li><strong>Entrada:</strong> {{ reservaCreada.fechaEntrada }}</li>
+          <li><strong>Salida:</strong> {{ reservaCreada.fechaSalida }}</li>
+          <li><strong>Total:</strong> ${{ reservaCreada.montoTotal }}</li>
+          <li><strong>Estado:</strong> {{ reservaCreada.estado }}</li>
+        </ul>
+
+        @if (vista === 'crearAdmin') {
+          <a routerLink="/admin/reservas">
+            <button type="button">Volver al listado</button>
+          </a>
+        } @else {
+          <button type="button" (click)="nuevaReserva()">Hacer otra reserva</button>
+          @if (vista === 'crear') {
+            <p style="margin-top:1rem; font-size:0.85rem; color:#555; text-align:center">
+              Serás redirigido a tus reservas en unos segundos...
+            </p>
+            <button type="button" class="btn-volver-link"
+                    style="display:block; text-align:center; margin-top:0.5rem"
+                    (click)="irAMisReservas()">
+              Ir a mis reservas ahora →
+            </button>
+          }
+        }
+      </div>
+    }
+
   }
 
 </section>
